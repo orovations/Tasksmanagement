@@ -1,0 +1,3322 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Orovations - Video Production, Sales & Attendance Management</title>
+  
+  <!-- Tailwind CSS & Google Fonts -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            display: ['Plus Jakarta Sans', 'sans-serif'],
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 9999px; }
+    ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+    @keyframes popIn {
+      0% { opacity: 0; transform: scale(0.92) translateY(8px); }
+      100% { opacity: 1; transform: scale(1) translateY(0); }
+    }
+    .animate-pop { animation: popIn 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-800 antialiased font-sans min-h-screen flex flex-col">
+
+  <!-- ======================================================= -->
+  <!-- 1. WORKFLOW POPUP NOTIFICATIONS                         -->
+  <!-- ======================================================= -->
+  <div id="workflow-popup-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 hidden">
+    <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-indigo-100 animate-pop">
+      <div class="flex items-center gap-3.5 mb-4">
+        <div id="wf-popup-icon-box" class="w-12 h-12 rounded-2xl bg-indigo-600 text-white flex items-center justify-center shadow-lg shadow-indigo-500/30">
+          <i data-lucide="bell" class="w-6 h-6"></i>
+        </div>
+        <div>
+          <h3 id="wf-popup-title" class="font-display font-bold text-lg text-slate-900">Production Update</h3>
+          <p id="wf-popup-subtitle" class="text-xs text-slate-500">Live workflow notification</p>
+        </div>
+      </div>
+      <div id="wf-popup-content" class="p-4 rounded-2xl bg-slate-50 border border-slate-200/80 mb-5 text-xs space-y-2 text-slate-700"></div>
+      <div class="flex gap-2.5">
+        <button id="wf-popup-action-btn" onclick="closeWorkflowPopup(true)" class="flex-1 py-2.5 px-4 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs transition shadow-sm">
+          View Now
+        </button>
+        <button onclick="closeWorkflowPopup(false)" class="py-2.5 px-4 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs transition">
+          Dismiss
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Container -->
+  <div id="toast-container" class="fixed bottom-4 right-4 z-50 flex flex-col gap-2 max-w-sm w-full pointer-events-none px-4 sm:px-0"></div>
+
+  <!-- ======================================================= -->
+  <!-- 2. SIMPLE, CLEAN LOGIN SCREEN                           -->
+  <!-- ======================================================= -->
+  <div id="auth-view" class="min-h-screen bg-slate-900 flex items-center justify-center p-4 relative overflow-hidden">
+    <div class="absolute -top-32 -left-32 w-96 h-96 bg-indigo-600/25 rounded-full blur-3xl pointer-events-none"></div>
+    <div class="absolute -bottom-32 -right-32 w-96 h-96 bg-purple-600/25 rounded-full blur-3xl pointer-events-none"></div>
+
+    <div class="w-full max-w-md bg-white rounded-3xl shadow-2xl border border-slate-100 p-6 sm:p-8 relative z-10">
+      <!-- Brand Header -->
+      <div class="text-center mb-6">
+        <div class="w-14 h-14 rounded-2xl bg-gradient-to-tr from-indigo-600 via-purple-600 to-pink-500 flex items-center justify-center text-white mx-auto shadow-lg shadow-indigo-500/30 mb-3">
+          <i data-lucide="sparkles" class="w-7 h-7"></i>
+        </div>
+        <h1 class="font-display font-extrabold text-2xl sm:text-3xl text-slate-900 tracking-tight">Orovations</h1>
+        <p class="text-slate-500 text-xs sm:text-sm mt-1">Video Production, Sales & Remote Attendance Portal</p>
+      </div>
+
+      <!-- Error Banner -->
+      <div id="login-error-box" class="hidden mb-4 p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-semibold flex items-center gap-2">
+        <i data-lucide="alert-circle" class="w-4 h-4 flex-shrink-0"></i>
+        <span id="login-error-text">Invalid email or password. Please check the credentials below.</span>
+      </div>
+
+      <!-- Clean Manual Login Form (No Pre-filled Inputs) -->
+      <form id="login-form" onsubmit="handleManualLogin(event)" class="space-y-4">
+        <div>
+          <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">Email Address</label>
+          <div class="relative">
+            <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+              <i data-lucide="mail" class="w-4 h-4"></i>
+            </span>
+            <input type="email" id="login-email" required autocomplete="username" class="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition" placeholder="name@orovations.com">
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">Password</label>
+          <div class="relative">
+            <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+              <i data-lucide="lock" class="w-4 h-4"></i>
+            </span>
+            <input type="password" id="login-password" required autocomplete="current-password" class="w-full pl-10 pr-10 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition" placeholder="Enter your password">
+            <button type="button" onclick="togglePasswordVisibility()" class="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-slate-600">
+              <i data-lucide="eye" id="password-toggle-icon" class="w-4 h-4"></i>
+            </button>
+          </div>
+        </div>
+
+        <div class="flex items-center justify-between text-xs text-slate-600 pt-1">
+          <label class="flex items-center gap-2 cursor-pointer">
+            <input type="checkbox" id="remember-me" checked class="w-4 h-4 rounded text-indigo-600 border-slate-300 focus:ring-indigo-500">
+            <span>Remember session</span>
+          </label>
+          <button type="button" onclick="showToast('Contact Super Admin (alex@orovations.com) for password reset.', 'info')" class="text-indigo-600 hover:text-indigo-700 font-semibold">Forgot Password?</button>
+        </div>
+
+        <button type="submit" class="w-full py-3 px-4 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-sm shadow-md shadow-indigo-600/25 transition flex items-center justify-center gap-2">
+          <span>Sign In to Workspace</span>
+          <i data-lucide="arrow-right" class="w-4 h-4"></i>
+        </button>
+      </form>
+
+      <!-- Production Security Footer -->
+      <div class="mt-6 pt-4 border-t border-slate-100 text-center">
+        <p class="text-[11px] text-slate-400 flex items-center justify-center gap-1.5 font-medium">
+          <i data-lucide="shield-check" class="w-3.5 h-3.5 text-indigo-500"></i>
+          <span>Protected by Orovations Role-Based Access Control</span>
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======================================================= -->
+  <!-- 3. RESPONSIVE APPLICATION WORKSPACE                     -->
+  <!-- ======================================================= -->
+  <div id="app-workspace" class="hidden flex-1 flex min-h-screen bg-slate-50 relative">
+    
+    <!-- Mobile Sidebar Backdrop -->
+    <div id="sidebar-backdrop" onclick="closeMobileSidebar()" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-30 hidden lg:hidden"></div>
+
+    <!-- Responsive Sidebar Navigation -->
+    <aside id="main-sidebar" class="fixed lg:static inset-y-0 left-0 w-72 bg-slate-900 text-slate-300 flex flex-col border-r border-slate-800 z-40 transform -translate-x-full lg:translate-x-0 transition-transform duration-300 ease-in-out">
+      
+      <!-- Brand Top -->
+      <div class="h-16 flex items-center justify-between px-5 border-b border-slate-800">
+        <div class="flex items-center gap-2.5">
+          <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-indigo-500 to-purple-600 flex items-center justify-center text-white shadow-md">
+            <i data-lucide="sparkles" class="w-5 h-5"></i>
+          </div>
+          <span class="font-display font-extrabold text-lg text-white tracking-tight">Orovations</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <span id="role-badge" class="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
+            Role
+          </span>
+          <button onclick="closeMobileSidebar()" class="lg:hidden p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800">
+            <i data-lucide="x" class="w-5 h-5"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Navigation Links -->
+      <div id="sidebar-nav-container" class="flex-1 overflow-y-auto px-3.5 py-4 space-y-5"></div>
+
+      <!-- User Footer & Logout -->
+      <div class="p-4 border-t border-slate-800 bg-slate-950/50">
+        <div class="flex items-center justify-between gap-2">
+          <div class="flex items-center gap-2.5 min-w-0">
+            <div id="user-avatar-badge" class="w-9 h-9 rounded-xl bg-indigo-600 text-white font-bold flex items-center justify-center text-xs flex-shrink-0">
+              AM
+            </div>
+            <div class="min-w-0">
+              <div id="user-display-name" class="font-bold text-xs text-white truncate">User Name</div>
+              <div id="user-display-email" class="text-[11px] text-slate-400 truncate">email@orovations.com</div>
+            </div>
+          </div>
+          <button onclick="handleLogout()" title="Sign Out" class="p-2 rounded-xl text-slate-400 hover:text-rose-400 hover:bg-slate-800 transition flex-shrink-0">
+            <i data-lucide="log-out" class="w-4 h-4"></i>
+          </button>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main Content Column -->
+    <div class="flex-1 flex flex-col min-w-0 max-h-screen overflow-y-auto">
+      
+      <!-- Top Header Bar -->
+      <header class="h-16 bg-white border-b border-slate-200/80 px-4 sm:px-6 flex items-center justify-between gap-3 sticky top-0 z-20 shadow-xs">
+        <div class="flex items-center gap-3 min-w-0">
+          <button onclick="openMobileSidebar()" class="lg:hidden p-2 rounded-xl text-slate-600 hover:bg-slate-100 flex-shrink-0">
+            <i data-lucide="menu" class="w-5 h-5"></i>
+          </button>
+          <div class="min-w-0">
+            <h2 id="page-title" class="font-display font-bold text-base sm:text-lg text-slate-900 truncate">Dashboard Overview</h2>
+            <p id="page-subtitle" class="text-[11px] text-slate-500 hidden sm:block truncate">Welcome to Orovations Workspace</p>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-2 sm:gap-3 flex-shrink-0">
+          <!-- Action Buttons by Role -->
+          <button id="top-create-task-btn" onclick="openCreateTaskModal()" class="hidden items-center gap-1.5 py-2 px-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold shadow-xs transition">
+            <i data-lucide="plus-circle" class="w-4 h-4"></i>
+            <span class="hidden sm:inline">New Animation Task</span>
+          </button>
+
+          <button id="top-create-sales-task-btn" onclick="openCreateSalesTaskModal()" class="hidden items-center gap-1.5 py-2 px-3 bg-teal-600 hover:bg-teal-700 text-white rounded-xl text-xs font-bold shadow-xs transition">
+            <i data-lucide="plus-circle" class="w-4 h-4"></i>
+            <span class="hidden sm:inline">Add Sales Task</span>
+          </button>
+
+          <!-- Attendance Pill -->
+          <button onclick="navigateTo('personal-attendance')" class="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200/70 border border-slate-200 text-xs transition">
+            <span id="attendance-status-dot" class="w-2.5 h-2.5 rounded-full bg-slate-400"></span>
+            <span id="attendance-status-text" class="font-semibold text-slate-700 hidden xs:inline">Checked Out</span>
+            <span id="attendance-timer-ticker" class="font-mono text-indigo-600 font-bold hidden">00:00:00</span>
+          </button>
+        </div>
+      </header>
+
+      <!-- Dynamic View Container -->
+      <main id="main-view-container" class="flex-1 p-4 sm:p-6 lg:p-8 max-w-7xl w-full mx-auto"></main>
+    </div>
+  </div>
+
+  <!-- ======================================================= -->
+  <!-- 4. MODALS                                               -->
+  <!-- ======================================================= -->
+
+  <!-- Create Animation / Video Task Modal -->
+  <div id="create-task-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 hidden">
+    <div class="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-slate-200 max-h-[90vh] overflow-y-auto">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-100 mb-4">
+        <h3 class="font-display font-bold text-lg text-slate-900">Create Animation / Video Task</h3>
+        <button onclick="closeModal('create-task-modal')" class="text-slate-400 hover:text-slate-600"><i data-lucide="x" class="w-5 h-5"></i></button>
+      </div>
+      <form onsubmit="handleCreateVideoTask(event)" class="space-y-4 text-xs">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">Task Number / ID *</label>
+            <input type="text" id="task-number-input" required class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl font-mono text-sm" placeholder="e.g. 105">
+          </div>
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">Task Type *</label>
+            <select id="task-type-input" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold">
+              <option value="Normal">Normal Task (24h)</option>
+              <option value="Urgent">Urgent Task (Rush)</option>
+              <option value="Company">Company Task</option>
+            </select>
+          </div>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">Car Company / Brand *</label>
+            <input type="text" id="car-company-input" required class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm" placeholder="e.g. Toyota">
+          </div>
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">Car Model / Title *</label>
+            <input type="text" id="car-model-input" required class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm" placeholder="e.g. Land Cruiser 300">
+          </div>
+        </div>
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">Google Drive Folder Link (Mandatory) *</label>
+          <input type="url" id="task-drive-link-input" required class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm" placeholder="https://drive.google.com/drive/folders/...">
+        </div>
+        <div id="creator-override-container" class="hidden">
+          <label class="block font-bold text-slate-700 mb-1">Created By / Animation Employee</label>
+          <select id="animator-override-input" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm"></select>
+        </div>
+        <div class="pt-3 flex gap-2">
+          <button type="submit" class="flex-1 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl shadow-xs transition">Create Task</button>
+          <button type="button" onclick="closeModal('create-task-modal')" class="py-2.5 px-4 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold rounded-xl">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Create Sales Task Modal -->
+  <div id="create-sales-task-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 hidden">
+    <div class="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-slate-200">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-100 mb-4">
+        <h3 class="font-display font-bold text-lg text-slate-900">Add New Sales Task</h3>
+        <button onclick="closeModal('create-sales-task-modal')" class="text-slate-400 hover:text-slate-600"><i data-lucide="x" class="w-5 h-5"></i></button>
+      </div>
+      <form onsubmit="handleCreateSalesTask(event)" class="space-y-4 text-xs">
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">Task Number *</label>
+          <input type="text" id="sales-task-num" required class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl font-mono text-sm" placeholder="e.g. S-205">
+        </div>
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">Company / Dealership Name *</label>
+          <input type="text" id="sales-company-name" required class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm" placeholder="e.g. Premier Motors">
+        </div>
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">Car Name / Model *</label>
+          <input type="text" id="sales-car-name" required class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm" placeholder="e.g. Porsche Cayenne">
+        </div>
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">Notes (Optional)</label>
+          <textarea id="sales-notes" rows="2" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm" placeholder="Any dealership specifications..."></textarea>
+        </div>
+        <div class="pt-3 flex gap-2">
+          <button type="submit" class="flex-1 py-2.5 bg-teal-600 hover:bg-teal-700 text-white font-bold rounded-xl shadow-xs transition">Save Sales Task</button>
+          <button type="button" onclick="closeModal('create-sales-task-modal')" class="py-2.5 px-4 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold rounded-xl">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Editor Video Submission Modal -->
+  <div id="submit-video-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 hidden">
+    <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-200">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-100 mb-4">
+        <h3 class="font-display font-bold text-lg text-slate-900">Submit Completed Video</h3>
+        <button onclick="closeModal('submit-video-modal')" class="text-slate-400 hover:text-slate-600"><i data-lucide="x" class="w-5 h-5"></i></button>
+      </div>
+      <form onsubmit="handleEditorVideoSubmit(event)" class="space-y-4 text-xs">
+        <input type="hidden" id="submit-task-id">
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">Google Drive Video Link (Required) *</label>
+          <input type="url" id="submit-drive-url" required class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm" placeholder="https://drive.google.com/file/d/...">
+        </div>
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">Submission Notes (Optional)</label>
+          <textarea id="submit-notes" rows="3" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm" placeholder="Notes for Quality Control..."></textarea>
+        </div>
+        <div class="pt-3 flex gap-2">
+          <button type="submit" class="flex-1 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl shadow-xs transition">Submit for QC</button>
+          <button type="button" onclick="closeModal('submit-video-modal')" class="py-2.5 px-4 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold rounded-xl">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Admin Quality Control Review Modal -->
+  <div id="qc-review-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 hidden">
+    <div class="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-slate-200">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-100 mb-4">
+        <h3 class="font-display font-bold text-lg text-slate-900">Quality Control Review</h3>
+        <button onclick="closeModal('qc-review-modal')" class="text-slate-400 hover:text-slate-600"><i data-lucide="x" class="w-5 h-5"></i></button>
+      </div>
+      <div id="qc-modal-info" class="p-3.5 bg-slate-50 rounded-2xl mb-4 text-xs space-y-1"></div>
+      <div class="space-y-4 text-xs">
+        <div class="grid grid-cols-2 gap-2.5">
+          <button type="button" onclick="setQcDecision('Approved')" id="qc-btn-approve" class="py-2.5 rounded-xl border-2 border-emerald-500 bg-emerald-50 text-emerald-800 font-bold">
+            Perfect / Approve
+          </button>
+          <button type="button" onclick="setQcDecision('Revision Required')" id="qc-btn-revise" class="py-2.5 rounded-xl border border-slate-200 text-slate-700 font-bold">
+            Error / Revision Required
+          </button>
+        </div>
+        <div id="qc-error-fields" class="space-y-3 hidden">
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">Error Category *</label>
+            <select id="qc-error-category" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl">
+              <option value="Editing Mistake">Editing Mistake</option>
+              <option value="Missing Scene">Missing Scene</option>
+              <option value="Incorrect Music / Audio">Incorrect Music / Audio</option>
+              <option value="Text or Subtitle Error">Text or Subtitle Error</option>
+              <option value="Colour Grading Issue">Colour Grading Issue</option>
+              <option value="Incorrect Animation">Incorrect Animation</option>
+            </select>
+          </div>
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">Feedback / Correction Details *</label>
+            <textarea id="qc-error-description" rows="3" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl" placeholder="Describe what needs to be fixed..."></textarea>
+          </div>
+        </div>
+        <div class="pt-3 flex gap-2">
+          <button type="button" onclick="submitQcDecision()" class="flex-1 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl">Confirm Decision</button>
+          <button type="button" onclick="closeModal('qc-review-modal')" class="py-2.5 px-4 bg-slate-100 text-slate-700 font-semibold rounded-xl">Cancel</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bulk Assign Modal -->
+  <div id="bulk-assign-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 hidden">
+    <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-200">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-100 mb-4">
+        <h3 class="font-display font-bold text-lg text-slate-900">Assign Tasks to Editor</h3>
+        <button onclick="closeModal('bulk-assign-modal')" class="text-slate-400 hover:text-slate-600"><i data-lucide="x" class="w-5 h-5"></i></button>
+      </div>
+      <div class="space-y-4 text-xs">
+        <div id="bulk-assign-summary" class="p-3 bg-indigo-50 rounded-2xl text-indigo-900 font-semibold"></div>
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">Select Editing Employee *</label>
+          <select id="bulk-editor-select" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold"></select>
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">Task Type</label>
+            <select id="bulk-type-select" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm">
+              <option value="Normal">Normal Task</option>
+              <option value="Urgent">Urgent Task</option>
+              <option value="Company">Company Task</option>
+            </select>
+          </div>
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">Deadline</label>
+            <select id="bulk-deadline-select" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm">
+              <option value="24">24 Hours (Default)</option>
+              <option value="12">12 Hours (Rush)</option>
+              <option value="6">6 Hours (Urgent)</option>
+            </select>
+          </div>
+        </div>
+        <div class="pt-3 flex gap-2">
+          <button type="button" onclick="confirmBulkAssignment()" class="flex-1 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl">Confirm Assignment</button>
+          <button type="button" onclick="closeModal('bulk-assign-modal')" class="py-2.5 px-4 bg-slate-100 text-slate-700 font-semibold rounded-xl">Cancel</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Edit Daily Quota Modal -->
+  <div id="edit-quota-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 hidden">
+    <div class="bg-white rounded-3xl max-w-sm w-full p-6 shadow-2xl border border-slate-200">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-100 mb-4">
+        <h3 class="font-display font-bold text-base text-slate-900" id="quota-modal-title">Update Daily Quota</h3>
+        <button onclick="closeModal('edit-quota-modal')" class="text-slate-400 hover:text-slate-600"><i data-lucide="x" class="w-5 h-5"></i></button>
+      </div>
+      <form onsubmit="handleSaveQuota(event)" class="space-y-4 text-xs">
+        <input type="hidden" id="quota-user-id">
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">Daily Task Quota *</label>
+          <input type="number" id="quota-input-val" min="1" max="100" required class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold">
+          <p class="text-[11px] text-slate-400 mt-1">Note: Sunday is an official off day with 0 quota.</p>
+        </div>
+        <div class="flex gap-2 pt-2">
+          <button type="submit" class="flex-1 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl">Save Quota</button>
+          <button type="button" onclick="closeModal('edit-quota-modal')" class="py-2.5 px-4 bg-slate-100 rounded-xl text-slate-700 font-semibold">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Disapprove Sales Modal -->
+  <div id="disapprove-sales-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 hidden">
+    <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-200">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-100 mb-4">
+        <h3 class="font-display font-bold text-base text-slate-900">Disapprove Selected Sales Task(s)</h3>
+        <button onclick="closeModal('disapprove-sales-modal')" class="text-slate-400 hover:text-slate-600"><i data-lucide="x" class="w-5 h-5"></i></button>
+      </div>
+      <form onsubmit="confirmDisapproveSalesTasks(event)" class="space-y-4 text-xs">
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">Disapproval Feedback / Reason *</label>
+          <textarea id="sales-disapproval-reason" rows="3" required class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm" placeholder="Enter reason for disapproval..."></textarea>
+        </div>
+        <div class="flex gap-2 pt-2">
+          <button type="submit" class="flex-1 py-2.5 bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-xl">Confirm Disapproval</button>
+          <button type="button" onclick="closeModal('disapprove-sales-modal')" class="py-2.5 px-4 bg-slate-100 rounded-xl text-slate-700 font-semibold">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Super Admin: Add / Edit Employee & Credentials Modal -->
+  <div id="user-Manage-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 hidden">
+    <div class="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-slate-200 max-h-[90vh] overflow-y-auto animate-pop">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-100 mb-4">
+        <div>
+          <h3 id="user-modal-title" class="font-display font-bold text-lg text-slate-900">Add New Employee</h3>
+          <p class="text-[11px] text-slate-500">Set login email ID, password, role, department, and daily quota</p>
+        </div>
+        <button onclick="closeModal('user-Manage-modal')" class="text-slate-400 hover:text-slate-600"><i data-lucide="x" class="w-5 h-5"></i></button>
+      </div>
+      <form onsubmit="handleSaveUserModal(event)" class="space-y-4 text-xs">
+        <input type="hidden" id="emp-edit-id">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">Full Name *</label>
+            <input type="text" id="emp-name-input" required class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold" placeholder="e.g. Zainab Tariq">
+          </div>
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">Login Email / User ID *</label>
+            <input type="email" id="emp-email-input" required class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-mono" placeholder="zainab@orovations.com">
+          </div>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">Login Password *</label>
+            <div class="relative">
+              <input type="text" id="emp-password-input" required class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-mono" placeholder="Enter password">
+            </div>
+          </div>
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">Role & Dashboard Access *</label>
+            <select id="emp-role-input" onchange="syncDeptFromRole()" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold">
+              <option value="Animation">Animation Employee</option>
+              <option value="Editing">Editing Employee</option>
+              <option value="Sales Tasks">Sales Tasks Person</option>
+              <option value="Sales Tasks Checker">Sales Tasks Checker</option>
+              <option value="Admin">Admin</option>
+              <option value="Super Admin">Super Admin</option>
+            </select>
+          </div>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">Department *</label>
+            <input type="text" id="emp-dept-input" required class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm" placeholder="Animation">
+          </div>
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">Daily Task Quota *</label>
+            <input type="number" id="emp-quota-input" min="1" max="100" required class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold" value="10">
+          </div>
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">Account Status *</label>
+            <select id="emp-status-input" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold">
+              <option value="Active">Active</option>
+              <option value="Deactivated">Deactivated</option>
+            </select>
+          </div>
+        </div>
+        <div class="pt-3 flex gap-2">
+          <button type="submit" class="flex-1 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl shadow-xs transition">Save Employee Account</button>
+          <button type="button" onclick="closeModal('user-Manage-modal')" class="py-2.5 px-4 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold rounded-xl">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ======================================================= -->
+  <!-- 5. APPLICATION JAVASCRIPT ENGINE                        -->
+  <!-- ======================================================= -->
+  <script>
+    const STORAGE_KEY = 'OROVATIONS_PROD_DB_V4';
+
+    function refreshIcons() {
+      try {
+        if (window.lucide) window.lucide.createIcons();
+      } catch (e) {}
+    }
+
+    // Web Audio API Sound Chime for Workflow Notifications
+    function playNotificationChime() {
+      try {
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        if (!AudioCtx) return;
+        const ctx = new AudioCtx();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(587.33, ctx.currentTime); // D5
+        osc.frequency.exponentialRampToValueAtTime(880, ctx.currentTime + 0.18); // A5
+        gain.gain.setValueAtTime(0.12, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.45);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start();
+        osc.stop(ctx.currentTime + 0.45);
+      } catch (e) {}
+    }
+
+    // Helper to build realistic historical attendance for current year/month so Present & Absent counts are rich and accurate
+    function generateInitialAttendance() {
+      const records = [];
+      const now = new Date();
+      const curYear = now.getFullYear();
+      const curMonth = now.getMonth();
+      const todayDate = now.getDate();
+
+      const staffList = [
+        { id: 'usr-1', name: 'Alex Mercer', dept: 'Management', absentDays: [] },
+        { id: 'usr-2', name: 'Sarah Connor', dept: 'Operations', absentDays: [4] },
+        { id: 'usr-3', name: 'Fatima Noor', dept: 'Animation', absentDays: [3] },
+        { id: 'usr-4', name: 'Bilal Ahmed', dept: 'Animation', absentDays: [2, 6] },
+        { id: 'usr-5', name: 'Ali Khan', dept: 'Editing', absentDays: [5] },
+        { id: 'usr-6', name: 'Ahmed Raza', dept: 'Editing', absentDays: [3, 7] },
+        { id: 'usr-7', name: 'Usman Farooq', dept: 'Sales', absentDays: [4] },
+        { id: 'usr-8', name: 'Zayd Malik', dept: 'Sales', absentDays: [2, 8] },
+        { id: 'usr-9', name: 'Amna Sheikh', dept: 'Sales Audit', absentDays: [6] }
+      ];
+
+      staffList.forEach(st => {
+        for (let d = 1; d <= todayDate; d++) {
+          const dt = new Date(curYear, curMonth, d);
+          if (dt.getDay() === 0) continue; // Sunday is strictly Off
+          if (st.absentDays.includes(d) && d !== todayDate) continue; // Simulated absent day
+          const dateStr = `${curYear}-${String(curMonth + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+          records.push({
+            id: `att-${st.id}-${dateStr}`,
+            userId: st.id,
+            userName: st.name,
+            department: st.dept,
+            date: dateStr,
+            checkIn: '09:15 AM',
+            checkOut: '05:30 PM',
+            sessionsCount: d % 2 === 0 ? 2 : 1,
+            sessionHours: 8.2,
+            activeHours: 7.7,
+            status: 'Present'
+          });
+        }
+      });
+      return records;
+    }
+
+    const INITIAL_DB = {
+      users: [
+        { id: 'usr-1', name: 'Alex Mercer', email: 'alex@orovations.com', password: 'password123', role: 'Super Admin', department: 'Management', avatarBg: 'bg-purple-600', dailyTarget: 10, status: 'Active' },
+        { id: 'usr-2', name: 'Sarah Connor', email: 'sarah@orovations.com', password: 'password123', role: 'Admin', department: 'Operations', avatarBg: 'bg-blue-600', dailyTarget: 10, status: 'Active' },
+        { id: 'usr-3', name: 'Fatima Noor', email: 'fatima@orovations.com', password: 'password123', role: 'Animation', department: 'Animation', avatarBg: 'bg-amber-600', dailyTarget: 10, status: 'Active' },
+        { id: 'usr-4', name: 'Bilal Ahmed', email: 'bilal@orovations.com', password: 'password123', role: 'Animation', department: 'Animation', avatarBg: 'bg-orange-600', dailyTarget: 10, status: 'Active' },
+        { id: 'usr-5', name: 'Ali Khan', email: 'ali@orovations.com', password: 'password123', role: 'Editing', department: 'Editing', avatarBg: 'bg-emerald-600', dailyTarget: 8, status: 'Active' },
+        { id: 'usr-6', name: 'Ahmed Raza', email: 'ahmed@orovations.com', password: 'password123', role: 'Editing', department: 'Editing', avatarBg: 'bg-teal-600', dailyTarget: 8, status: 'Active' },
+        { id: 'usr-7', name: 'Usman Farooq', email: 'usman@orovations.com', password: 'password123', role: 'Sales Tasks', department: 'Sales', avatarBg: 'bg-cyan-600', dailyTarget: 12, status: 'Active' },
+        { id: 'usr-8', name: 'Zayd Malik', email: 'zayd@orovations.com', password: 'password123', role: 'Sales Tasks', department: 'Sales', avatarBg: 'bg-indigo-600', dailyTarget: 12, status: 'Active' },
+        { id: 'usr-9', name: 'Amna Sheikh', email: 'amna@orovations.com', password: 'password123', role: 'Sales Tasks Checker', department: 'Sales Audit', avatarBg: 'bg-rose-600', dailyTarget: 25, status: 'Active' }
+      ],
+      tasks: [
+        {
+          id: 'tsk-101',
+          taskNumber: '101',
+          carCompany: 'Toyota',
+          carModel: 'Corolla Altis 2025',
+          driveLink: 'https://drive.google.com/drive/folders/101-assets',
+          type: 'Normal',
+          status: 'Available',
+          createdById: 'usr-3',
+          creatorName: 'Fatima Noor',
+          createdAt: new Date(Date.now() - 3600000 * 2).toISOString(),
+          assignedToId: null,
+          assignedToName: null,
+          assignedAt: null,
+          deadline: null,
+          submissionUrl: null,
+          submissionNotes: null,
+          submittedAt: null,
+          approvedAt: null,
+          approvedBy: null,
+          errorCategory: null,
+          errorDescription: null
+        },
+        {
+          id: 'tsk-102',
+          taskNumber: '102',
+          carCompany: 'Honda',
+          carModel: 'Civic RS Turbo',
+          driveLink: 'https://drive.google.com/drive/folders/102-assets',
+          type: 'Urgent',
+          status: 'Assigned',
+          createdById: 'usr-3',
+          creatorName: 'Fatima Noor',
+          createdAt: new Date(Date.now() - 3600000 * 5).toISOString(),
+          assignedToId: 'usr-5',
+          assignedToName: 'Ali Khan',
+          assignedAt: new Date(Date.now() - 3600000 * 3).toISOString(),
+          deadline: new Date(Date.now() + 3600000 * 18).toISOString(),
+          submissionUrl: null,
+          submissionNotes: null,
+          submittedAt: null,
+          approvedAt: null,
+          approvedBy: null,
+          errorCategory: null,
+          errorDescription: null
+        },
+        {
+          id: 'tsk-103',
+          taskNumber: '103',
+          carCompany: 'BMW',
+          carModel: 'M4 Competition Coupe',
+          driveLink: 'https://drive.google.com/drive/folders/103-assets',
+          type: 'Normal',
+          status: 'Submitted',
+          createdById: 'usr-4',
+          creatorName: 'Bilal Ahmed',
+          createdAt: new Date(Date.now() - 3600000 * 10).toISOString(),
+          assignedToId: 'usr-5',
+          assignedToName: 'Ali Khan',
+          assignedAt: new Date(Date.now() - 3600000 * 8).toISOString(),
+          deadline: new Date(Date.now() + 3600000 * 14).toISOString(),
+          submissionUrl: 'https://drive.google.com/file/d/103-final-cut',
+          submissionNotes: 'Full 4K export with color grading completed.',
+          submittedAt: new Date(Date.now() - 3600000 * 1).toISOString(),
+          approvedAt: null,
+          approvedBy: null,
+          errorCategory: null,
+          errorDescription: null
+        },
+        {
+          id: 'tsk-104',
+          taskNumber: '104',
+          carCompany: 'Mercedes-Benz',
+          carModel: 'C300 AMG Line',
+          driveLink: 'https://drive.google.com/drive/folders/104-assets',
+          type: 'Company',
+          status: 'Approved',
+          createdById: 'usr-3',
+          creatorName: 'Fatima Noor',
+          createdAt: new Date(Date.now() - 3600000 * 26).toISOString(),
+          assignedToId: 'usr-6',
+          assignedToName: 'Ahmed Raza',
+          assignedAt: new Date(Date.now() - 3600000 * 22).toISOString(),
+          deadline: new Date(Date.now() - 3600000 * 2).toISOString(),
+          submissionUrl: 'https://drive.google.com/file/d/104-approved-cut',
+          submissionNotes: 'Promotional dealership showcase cut.',
+          submittedAt: new Date(Date.now() - 3600000 * 5).toISOString(),
+          approvedAt: new Date(Date.now() - 3600000 * 1).toISOString(),
+          approvedBy: 'Sarah Connor (Admin)',
+          errorCategory: null,
+          errorDescription: null
+        }
+      ],
+      salesTasks: [
+        {
+          id: 'sls-201',
+          taskNumber: 'S-201',
+          companyName: 'Apex Auto Gallery',
+          carName: 'Audi RS6 Avant',
+          notes: 'Showroom walkaround package.',
+          creatorId: 'usr-7',
+          creatorName: 'Usman Farooq',
+          createdAt: new Date(Date.now() - 3600000 * 3).toISOString(),
+          status: 'Pending Review',
+          feedback: null
+        },
+        {
+          id: 'sls-202',
+          taskNumber: 'S-202',
+          companyName: 'Luxury Motors PK',
+          carName: 'Porsche 911 GT3',
+          notes: 'Priority client reel.',
+          creatorId: 'usr-8',
+          creatorName: 'Zayd Malik',
+          createdAt: new Date(Date.now() - 3600000 * 6).toISOString(),
+          status: 'Approved',
+          feedback: 'Verified and approved.'
+        }
+      ],
+      attendance: generateInitialAttendance()
+    };
+
+    let DB = loadDatabase();
+
+    function loadDatabase() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (parsed && Array.isArray(parsed.users) && Array.isArray(parsed.tasks)) {
+            parsed.users.forEach(u => { if (!u.status) u.status = 'Active'; });
+            if (!Array.isArray(parsed.salesTasks)) parsed.salesTasks = INITIAL_DB.salesTasks;
+            if (!Array.isArray(parsed.attendance)) parsed.attendance = INITIAL_DB.attendance;
+            return parsed;
+          }
+        }
+      } catch (e) {}
+      return JSON.parse(JSON.stringify(INITIAL_DB));
+    }
+
+    function saveState() {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(DB));
+      } catch (e) {}
+    }
+
+    function resetDemoData() {
+      DB = JSON.parse(JSON.stringify(INITIAL_DB));
+      saveState();
+      showToast('Database reset to clean initial demo records.', 'info');
+      navigateTo(currentRoute);
+    }
+
+    // Session & View Variables
+    let currentUser = null;
+    let currentRoute = 'overview';
+    let popupTargetRoute = null;
+    let selectedTaskIdsForBulk = new Set();
+    let selectedSalesTaskIdsForBulk = new Set();
+    let activeAttendanceSession = null;
+    let attendanceTimerInterval = null;
+    let qcCurrentTaskId = null;
+    let qcSelectedDecision = 'Approved';
+
+    // Filter & Tab States
+    let animFilter = { search: '', staff: 'ALL', datePreset: 'ALL', status: 'ALL', type: 'ALL' };
+    let qcFilter = { search: '', staff: 'ALL', datePreset: 'ALL', type: 'ALL' };
+    let finalizedFilter = { search: '', datePreset: 'ALL', dateFrom: '', dateTo: '', type: 'ALL', staff: 'ALL' };
+    let salesAuditFilter = { search: '', rep: 'ALL', status: 'ALL', datePreset: 'ALL' };
+    let userMgmtFilter = { search: '', role: 'ALL' };
+    let personalAttTab = 'today';
+    let personalAttMonth = new Date().getMonth();
+    let personalAttYear = new Date().getFullYear();
+    let superAttTab = 'today';
+    let superAttUserFilter = 'ALL';
+    let superAttMonth = new Date().getMonth();
+    let superAttYear = new Date().getFullYear();
+    let myPerfTab = 'daily';
+    let superPerfPeriod = 'daily';
+
+    function isSunday(d) {
+      return (d || new Date()).getDay() === 0;
+    }
+
+    /* ----------------------------------------------------
+       ATTENDANCE PRESENT / ABSENT / SUNDAY ENGINE
+       ---------------------------------------------------- */
+    function computeUserMonthlyAttendance(userId, year, month) {
+      const now = new Date();
+      const daysInMonth = new Date(year, month + 1, 0).getDate();
+      let presentDays = 0;
+      let absentDays = 0;
+      let sundayCount = 0;
+      let elapsedWorkingDays = 0;
+      let totalSessionHours = 0;
+      let totalActiveHours = 0;
+      const dayBreakdown = [];
+
+      for (let d = 1; d <= daysInMonth; d++) {
+        const dt = new Date(year, month, d);
+        const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+        const sun = dt.getDay() === 0;
+        const isFuture = dt > now && dateStr !== now.toISOString().split('T')[0];
+
+        const recs = DB.attendance.filter(a => a.userId === userId && a.date === dateStr && a.status !== 'Absent');
+        const hasPresent = recs.length > 0;
+        const daySessHrs = recs.reduce((s, r) => s + Number(r.sessionHours || 0), 0);
+        const dayActHrs = recs.reduce((s, r) => s + Number(r.activeHours || 0), 0);
+        const sessionsCount = recs.reduce((s, r) => s + Number(r.sessionsCount || 1), 0);
+
+        let status = 'Upcoming';
+        if (sun) {
+          sundayCount++;
+          status = 'Sunday Off';
+        } else if (!isFuture) {
+          elapsedWorkingDays++;
+          if (hasPresent) {
+            presentDays++;
+            totalSessionHours += daySessHrs;
+            totalActiveHours += dayActHrs;
+            status = 'Present';
+          } else {
+            absentDays++;
+            status = 'Absent';
+          }
+        } else if (hasPresent) {
+          presentDays++;
+          elapsedWorkingDays++;
+          totalSessionHours += daySessHrs;
+          totalActiveHours += dayActHrs;
+          status = 'Present';
+        }
+
+        dayBreakdown.push({
+          day: d,
+          dateStr,
+          label: dt.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' }),
+          isSun: sun,
+          isFuture,
+          status,
+          sessionsCount: hasPresent ? sessionsCount : 0,
+          sessionHours: daySessHrs.toFixed(1),
+          activeHours: dayActHrs.toFixed(1)
+        });
+      }
+
+      const attendanceRate = elapsedWorkingDays > 0 ? Math.round((presentDays / elapsedWorkingDays) * 100) : 100;
+
+      return {
+        daysInMonth,
+        elapsedWorkingDays,
+        presentDays,
+        absentDays,
+        sundayCount,
+        totalSessionHours: totalSessionHours.toFixed(1),
+        totalActiveHours: totalActiveHours.toFixed(1),
+        attendanceRate,
+        dayBreakdown
+      };
+    }
+
+    function computeUserYearlyAttendance(userId, year) {
+      const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+      const now = new Date();
+      let annualPresent = 0;
+      let annualAbsent = 0;
+      let annualSundays = 0;
+      let annualElapsedWorking = 0;
+      let annualSessionHrs = 0;
+      let annualActiveHrs = 0;
+
+      const monthRows = months.map((mName, mIdx) => {
+        if (year === now.getFullYear() && mIdx === now.getMonth()) {
+          const cur = computeUserMonthlyAttendance(userId, year, mIdx);
+          annualPresent += cur.presentDays;
+          annualAbsent += cur.absentDays;
+          annualSundays += cur.sundayCount;
+          annualElapsedWorking += cur.elapsedWorkingDays;
+          annualSessionHrs += parseFloat(cur.totalSessionHours);
+          annualActiveHrs += parseFloat(cur.totalActiveHours);
+          return {
+            monthName: mName,
+            monthIndex: mIdx,
+            workingDays: cur.elapsedWorkingDays,
+            presentDays: cur.presentDays,
+            absentDays: cur.absentDays,
+            sundays: cur.sundayCount,
+            sessionHours: cur.totalSessionHours,
+            activeHours: cur.totalActiveHours,
+            rate: cur.attendanceRate,
+            isFutureMonth: false
+          };
+        } else if (year > now.getFullYear() || (year === now.getFullYear() && mIdx > now.getMonth())) {
+          return {
+            monthName: mName,
+            monthIndex: mIdx,
+            workingDays: 0,
+            presentDays: 0,
+            absentDays: 0,
+            sundays: 4,
+            sessionHours: '0.0',
+            activeHours: '0.0',
+            rate: 100,
+            isFutureMonth: true
+          };
+        } else {
+          // Past completed months summary
+          const daysInM = new Date(year, mIdx + 1, 0).getDate();
+          let sundays = 0;
+          for (let d = 1; d <= daysInM; d++) {
+            if (new Date(year, mIdx, d).getDay() === 0) sundays++;
+          }
+          const workDays = daysInM - sundays;
+          const simAbsent = (mIdx % 2 === 0) ? 1 : 2;
+          const simPresent = workDays - simAbsent;
+          const sessH = (simPresent * 8.0).toFixed(1);
+          const actH = (simPresent * 7.5).toFixed(1);
+          const rate = Math.round((simPresent / workDays) * 100);
+
+          annualPresent += simPresent;
+          annualAbsent += simAbsent;
+          annualSundays += sundays;
+          annualElapsedWorking += workDays;
+          annualSessionHrs += parseFloat(sessH);
+          annualActiveHrs += parseFloat(actH);
+
+          return {
+            monthName: mName,
+            monthIndex: mIdx,
+            workingDays: workDays,
+            presentDays: simPresent,
+            absentDays: simAbsent,
+            sundays,
+            sessionHours: sessH,
+            activeHours: actH,
+            rate,
+            isFutureMonth: false
+          };
+        }
+      });
+
+      const annualRate = annualElapsedWorking > 0 ? Math.round((annualPresent / annualElapsedWorking) * 100) : 100;
+
+      return {
+        annualPresent,
+        annualAbsent,
+        annualSundays,
+        annualElapsedWorking,
+        annualSessionHrs: annualSessionHrs.toFixed(1),
+        annualActiveHrs: annualActiveHrs.toFixed(1),
+        annualRate,
+        monthRows
+      };
+    }
+
+    function toggleAttendanceDayPresent(userId, dateStr) {
+      if (currentUser.role !== 'Super Admin') return;
+      const u = DB.users.find(x => x.id === userId);
+      if (!u) return;
+      const existingIdx = DB.attendance.findIndex(a => a.userId === userId && a.date === dateStr);
+      if (existingIdx > -1) {
+        DB.attendance.splice(existingIdx, 1);
+        showToast(`Marked ${u.name} as Absent on ${dateStr}.`, 'info');
+      } else {
+        DB.attendance.push({
+          id: `att-${userId}-${dateStr}`,
+          userId: u.id,
+          userName: u.name,
+          department: u.department,
+          date: dateStr,
+          checkIn: '09:00 AM',
+          checkOut: '05:00 PM',
+          sessionsCount: 1,
+          sessionHours: 8.0,
+          activeHours: 7.5,
+          status: 'Present'
+        });
+        showToast(`Marked ${u.name} as Present on ${dateStr}.`, 'success');
+      }
+      saveState();
+      navigateTo(currentRoute);
+    }
+
+    /* ----------------------------------------------------
+       MOBILE SIDEBAR DRAWER CONTROLS
+       ---------------------------------------------------- */
+    function openMobileSidebar() {
+      document.getElementById('main-sidebar').classList.remove('-translate-x-full');
+      document.getElementById('sidebar-backdrop').classList.remove('hidden');
+    }
+
+    function closeMobileSidebar() {
+      document.getElementById('main-sidebar').classList.add('-translate-x-full');
+      document.getElementById('sidebar-backdrop').classList.add('hidden');
+    }
+
+    /* ----------------------------------------------------
+       WORKFLOW POPUP ENGINE
+       ---------------------------------------------------- */
+    function showWorkflowPopup(title, subtitle, htmlContent, targetRoute, buttonText) {
+      document.getElementById('wf-popup-title').innerText = title;
+      document.getElementById('wf-popup-subtitle').innerText = subtitle;
+      document.getElementById('wf-popup-content').innerHTML = htmlContent;
+      document.getElementById('wf-popup-action-btn').innerText = buttonText || 'Open Now';
+      popupTargetRoute = targetRoute;
+      document.getElementById('workflow-popup-modal').classList.remove('hidden');
+      playNotificationChime();
+      refreshIcons();
+    }
+
+    function closeWorkflowPopup(go) {
+      document.getElementById('workflow-popup-modal').classList.add('hidden');
+      if (go && popupTargetRoute) {
+        navigateTo(popupTargetRoute);
+      }
+    }
+
+    /* ----------------------------------------------------
+       LOGIN & AUTHENTICATION
+       ---------------------------------------------------- */
+    function handleManualLogin(e) {
+      if (e) e.preventDefault();
+      const email = document.getElementById('login-email').value.trim();
+      const pass = document.getElementById('login-password').value.trim();
+      const errBox = document.getElementById('login-error-box');
+      const errText = document.getElementById('login-error-text');
+
+      const user = DB.users.find(u => u.email.toLowerCase() === email.toLowerCase() && u.password === pass);
+      if (!user) {
+        errText.innerText = 'Invalid email or password. Please check your login credentials.';
+        errBox.classList.remove('hidden');
+        showToast('Invalid email or password.', 'error');
+        return;
+      }
+
+      if (user.status === 'Deactivated') {
+        errText.innerText = 'This employee account has been deactivated by Super Admin.';
+        errBox.classList.remove('hidden');
+        showToast('Account is deactivated.', 'error');
+        return;
+      }
+
+      errBox.classList.add('hidden');
+      loginUserSession(user);
+    }
+
+    function loginUserSession(user) {
+      currentUser = user;
+      document.getElementById('auth-view').classList.add('hidden');
+      document.getElementById('app-workspace').classList.remove('hidden');
+
+      document.getElementById('user-display-name').innerText = user.name;
+      document.getElementById('user-display-email').innerText = user.email;
+      document.getElementById('user-avatar-badge').className = `w-9 h-9 rounded-xl ${user.avatarBg} text-white font-bold flex items-center justify-center text-xs flex-shrink-0`;
+      document.getElementById('user-avatar-badge').innerText = user.name.split(' ').map(n => n[0]).join('');
+      document.getElementById('role-badge').innerText = user.role;
+
+      // Top Header Role-Specific Buttons
+      const createTaskBtn = document.getElementById('top-create-task-btn');
+      const createSalesBtn = document.getElementById('top-create-sales-task-btn');
+
+      if (user.role === 'Animation' || user.role === 'Admin' || user.role === 'Super Admin') {
+        createTaskBtn.classList.remove('hidden');
+        createTaskBtn.classList.add('flex');
+      } else {
+        createTaskBtn.classList.add('hidden');
+        createTaskBtn.classList.remove('flex');
+      }
+
+      if (user.role === 'Sales Tasks' || user.role === 'Sales Tasks Checker') {
+        createSalesBtn.classList.remove('hidden');
+        createSalesBtn.classList.add('flex');
+      } else {
+        createSalesBtn.classList.add('hidden');
+        createSalesBtn.classList.remove('flex');
+      }
+
+      // Default Landing Page per Role
+      if (user.role === 'Editing') navigateTo('editor-today');
+      else if (user.role === 'Animation') navigateTo('animation-mgmt');
+      else if (user.role === 'Sales Tasks') navigateTo('my-sales-tasks');
+      else if (user.role === 'Sales Tasks Checker') navigateTo('sales-checker-queue');
+      else navigateTo('overview');
+
+      // Automatic Role Popups on Login
+      if (user.role === 'Editing') {
+        const myAssigned = DB.tasks.filter(t => t.assignedToId === user.id && (t.status === 'Assigned' || t.status === 'In Progress' || t.status === 'Revision Required'));
+        if (myAssigned.length > 0) {
+          showWorkflowPopup(
+            `${myAssigned.length} New Task(s) Assigned!`,
+            `Assigned to ${user.name}`,
+            `<div class="font-bold text-indigo-900">You have ${myAssigned.length} active video task(s) in your queue:</div>
+             <ul class="list-disc pl-4 space-y-1 mt-1">${myAssigned.map(t => `<li><strong>#${t.taskNumber}</strong> - ${t.carCompany} ${t.carModel} (${t.status})</li>`).join('')}</ul>`,
+            'editor-today',
+            'Open My Assigned Tasks'
+          );
+        }
+      } else if (user.role === 'Admin' || user.role === 'Super Admin') {
+        const submittedVideos = DB.tasks.filter(t => t.status === 'Submitted');
+        const readyAnimations = DB.tasks.filter(t => t.status === 'Available');
+        if (submittedVideos.length > 0 || readyAnimations.length > 0) {
+          showWorkflowPopup(
+            `Studio Queue Alert`,
+            `Videos & Animations Ready`,
+            `<div class="space-y-2">
+               <div class="p-2.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-900 font-semibold">
+                 🎬 <strong>${submittedVideos.length} Submitted Video(s)</strong> available for Quality Control checking.
+               </div>
+               <div class="p-2.5 rounded-xl bg-purple-50 border border-purple-200 text-purple-900 font-semibold">
+                 ✨ <strong>${readyAnimations.length} Unassigned Animation(s)</strong> ready for Editor assignment.
+               </div>
+             </div>`,
+            submittedVideos.length > 0 ? 'qc-dashboard' : 'editing-assignment',
+            submittedVideos.length > 0 ? 'Check Submitted Videos' : 'Assign Animations'
+          );
+        }
+      }
+
+      showToast(`Signed in as ${user.name} (${user.role})`, 'success');
+    }
+
+    function handleLogout() {
+      if (activeAttendanceSession) clockOutAttendance(false);
+      currentUser = null;
+      document.getElementById('login-email').value = '';
+      document.getElementById('login-password').value = '';
+      document.getElementById('app-workspace').classList.add('hidden');
+      document.getElementById('auth-view').classList.remove('hidden');
+      closeMobileSidebar();
+      refreshIcons();
+    }
+
+    /* ----------------------------------------------------
+       SIDEBAR NAVIGATION (STRICT ROLE SEPARATION)
+       ---------------------------------------------------- */
+    function buildSidebarNav() {
+      const container = document.getElementById('sidebar-nav-container');
+      if (!container || !currentUser) return;
+      const role = currentUser.role;
+      let html = '';
+
+      const navBtn = (route, label, icon, badgeCount) => `
+        <button onclick="navigateTo('${route}')" class="w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold transition ${currentRoute === route ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-300 hover:bg-slate-800 hover:text-white'}">
+          <div class="flex items-center gap-2.5 truncate">
+            <i data-lucide="${icon}" class="w-4 h-4 flex-shrink-0"></i>
+            <span class="truncate">${label}</span>
+          </div>
+          ${badgeCount ? `<span class="px-1.5 py-0.5 text-[10px] rounded-full ${currentRoute === route ? 'bg-white text-indigo-700' : 'bg-slate-800 text-slate-300'} font-bold">${badgeCount}</span>` : ''}
+        </button>
+      `;
+
+      // Admin & Super Admin Menu
+      if (role === 'Super Admin' || role === 'Admin') {
+        const availCount = DB.tasks.filter(t => t.status === 'Available').length;
+        const qcCount = DB.tasks.filter(t => t.status === 'Submitted').length;
+        const approvedCount = DB.tasks.filter(t => t.status === 'Approved').length;
+        html += `
+          <div class="space-y-1">
+            <div class="px-3 text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">Production Control</div>
+            ${navBtn('overview', 'Overview Dashboard', 'layout-dashboard')}
+            ${navBtn('animation-mgmt', 'Animation Task Pool', 'sparkles', availCount)}
+            ${navBtn('editing-assignment', 'Editing Assignment', 'user-plus', availCount)}
+            ${navBtn('qc-dashboard', 'Submitted Videos / QC', 'check-square', qcCount)}
+            ${navBtn('finalized-videos', 'Finalized Approved List', 'film', approvedCount)}
+            ${navBtn('company-urgent-tasks', 'Company & Urgent Tasks', 'flame')}
+          </div>
+        `;
+      }
+
+      // Animation Employee Menu
+      if (role === 'Animation') {
+        html += `
+          <div class="space-y-1">
+            <div class="px-3 text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">Animation Workspace</div>
+            ${navBtn('overview', 'Overview', 'layout-dashboard')}
+            ${navBtn('animation-mgmt', 'My Animation Tasks', 'sparkles')}
+            ${navBtn('my-performance', 'My Performance', 'trending-up')}
+          </div>
+        `;
+      }
+
+      // Editing Employee Menu
+      if (role === 'Editing') {
+        const myAssigned = DB.tasks.filter(t => t.assignedToId === currentUser.id && (t.status === 'Assigned' || t.status === 'In Progress')).length;
+        const myRev = DB.tasks.filter(t => t.assignedToId === currentUser.id && t.status === 'Revision Required').length;
+        html += `
+          <div class="space-y-1">
+            <div class="px-3 text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">Editor Workstation</div>
+            ${navBtn('overview', 'Overview', 'layout-dashboard')}
+            ${navBtn('editor-today', "Today's Assigned Tasks", 'calendar-check', myAssigned)}
+            ${navBtn('editor-revisions', 'Errors / Revisions', 'alert-triangle', myRev)}
+            ${navBtn('editor-submitted', 'Submitted Videos', 'send')}
+            ${navBtn('editor-approved', 'Approved Videos', 'check-circle')}
+            ${navBtn('my-performance', 'My Performance', 'trending-up')}
+          </div>
+        `;
+      }
+
+      // Sales Tasks Person Menu (Strictly Separated from Editing & Animation)
+      if (role === 'Sales Tasks') {
+        html += `
+          <div class="space-y-1">
+            <div class="px-3 text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">Sales Workspace</div>
+            ${navBtn('my-sales-tasks', 'My Sales Tasks', 'briefcase')}
+            ${navBtn('my-performance', 'My Daily Performance', 'trending-up')}
+          </div>
+        `;
+      }
+
+      // Sales Tasks Checker Menu (Strictly Separated from Editing & Animation)
+      if (role === 'Sales Tasks Checker') {
+        const pendingSales = DB.salesTasks.filter(s => s.status === 'Pending Review').length;
+        html += `
+          <div class="space-y-1">
+            <div class="px-3 text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">Sales Checker Portal</div>
+            ${navBtn('sales-checker-queue', 'Submitted Sales Queue', 'list-checks', pendingSales)}
+            ${navBtn('sales-tasks-perf', 'Sales Tasks Performance', 'bar-chart-2')}
+            ${navBtn('sales-audit-history', 'Approved / Not Approved', 'check-circle-2')}
+          </div>
+        `;
+      }
+
+      // Remote Attendance Menu (All Roles)
+      html += `
+        <div class="space-y-1">
+          <div class="px-3 text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">Remote Attendance</div>
+          ${navBtn('personal-attendance', 'My Attendance', 'clock')}
+          ${role === 'Super Admin' ? navBtn('super-attendance', 'All Staff Attendance', 'users') : ''}
+        </div>
+      `;
+
+      // Super Admin Exclusive Governance
+      if (role === 'Super Admin') {
+        html += `
+          <div class="space-y-1">
+            <div class="px-3 text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">Super Admin Master</div>
+            ${navBtn('user-management', 'Staff & Credentials', 'user-cog', DB.users.length)}
+            ${navBtn('super-performance', 'Performance Analytics', 'award')}
+            ${navBtn('sales-audit-history', 'Sales Tasks Audit', 'briefcase')}
+            ${navBtn('database-safety', 'Database & Backups', 'database')}
+          </div>
+        `;
+      }
+
+      container.innerHTML = html;
+      refreshIcons();
+    }
+
+    function navigateTo(route) {
+      if (!currentUser) return;
+      currentRoute = route;
+      closeMobileSidebar();
+      buildSidebarNav();
+
+      const container = document.getElementById('main-view-container');
+      const titleEl = document.getElementById('page-title');
+      const subEl = document.getElementById('page-subtitle');
+
+      const titles = {
+        'overview': ['Overview Dashboard', 'Live studio metrics and role summary'],
+        'animation-mgmt': ['Animation Tasks Management', 'Mandatory Google Drive links & 24-hour delete window'],
+        'editing-assignment': ['Bulk Editing Task Assignment', 'Assign available animation tasks to video editors'],
+        'qc-dashboard': ['Submitted Videos & Quality Control', 'Review editor Google Drive cuts, approve or request revisions'],
+        'finalized-videos': ['Finalized Approved Videos', 'List view of all approved videos with completion dates & filters'],
+        'company-urgent-tasks': ['Company & Urgent Tasks', 'High-priority and promotional company video projects'],
+        'editor-today': ["Today's Assigned Tasks", 'Tasks assigned to you for video production'],
+        'editor-revisions': ['Errors & Revision Requests', 'Videos requiring corrections based on Admin QC feedback'],
+        'editor-submitted': ['My Submitted Videos', 'Videos awaiting Quality Control review'],
+        'editor-approved': ['My Approved Videos', 'Completed videos approved by Quality Control'],
+        'my-sales-tasks': ['My Sales Tasks & Daily Performance', 'Add sales tasks and track your daily quota progress'],
+        'sales-checker-queue': ['Sales Tasks Verification Queue', 'Review sales tasks grouped by person and approve/disapprove'],
+        'sales-tasks-perf': ['Sales Tasks Performance & Quotas', 'View daily performance of every sales person & update quotas'],
+        'sales-audit-history': ['Sales Approved & Disapproved Tasks', 'Filterable history of approved and rejected sales records'],
+        'personal-attendance': ['Remote Attendance (Present, Absent & Hours)', 'Today live timer, Monthly Present/Absent breakdown, and Yearly summary'],
+        'super-attendance': ['Company-Wide Attendance Management', 'Present days, Absent days, Sunday Rest Days & Hours across all staff'],
+        'user-management': ['Staff Accounts, Login IDs & Passwords', 'Add new employees or modify any user email ID, password, role & quota'],
+        'my-performance': ['My Performance Tracker', 'Daily, Last 7 Days (day-by-day), Weekly & Monthly performance'],
+        'super-performance': ['Super Admin Performance Analytics', 'All employee performance metrics, Present/Absent rate & quotas'],
+        'database-safety': ['Database Persistence & JSON Backups', 'Export or restore complete system database']
+      };
+
+      if (titles[route]) {
+        titleEl.innerText = titles[route][0];
+        subEl.innerText = titles[route][1];
+      }
+
+      if (route === 'overview') renderOverviewView(container);
+      else if (route === 'animation-mgmt') renderAnimationManagementView(container);
+      else if (route === 'editing-assignment') renderEditingAssignmentView(container);
+      else if (route === 'qc-dashboard') renderQcDashboardView(container);
+      else if (route === 'finalized-videos') renderFinalizedApprovedVideosView(container);
+      else if (route === 'company-urgent-tasks') renderCompanyUrgentTasksView(container);
+      else if (route === 'editor-today') renderEditorTasksView(container, 'assigned');
+      else if (route === 'editor-revisions') renderEditorTasksView(container, 'revisions');
+      else if (route === 'editor-submitted') renderEditorTasksView(container, 'submitted');
+      else if (route === 'editor-approved') renderEditorTasksView(container, 'approved');
+      else if (route === 'my-sales-tasks') renderMySalesTasksView(container);
+      else if (route === 'sales-checker-queue') renderSalesCheckerQueueView(container);
+      else if (route === 'sales-tasks-perf') renderSalesTasksPerformanceView(container);
+      else if (route === 'sales-audit-history') renderSalesAuditHistoryView(container);
+      else if (route === 'personal-attendance') renderPersonalAttendanceView(container);
+      else if (route === 'super-attendance') renderSuperAttendanceView(container);
+      else if (route === 'user-management') renderUserManagementView(container);
+      else if (route === 'my-performance') renderMyPerformanceView(container);
+      else if (route === 'super-performance') renderSuperAdminPerformanceAnalyticsView(container);
+      else if (route === 'database-safety') renderDatabaseSafetyView(container);
+
+      refreshIcons();
+    }
+
+    /* ----------------------------------------------------
+       DATE & FILTER HELPER
+       ---------------------------------------------------- */
+    function matchesDatePreset(isoDate, preset, fromDate, toDate) {
+      if (!isoDate || preset === 'ALL') return true;
+      const dStr = isoDate.split('T')[0];
+      const now = new Date();
+      const todayStr = now.toISOString().split('T')[0];
+      const yestStr = new Date(now.getTime() - 86400000).toISOString().split('T')[0];
+
+      if (preset === 'TODAY') return dStr === todayStr;
+      if (preset === 'YESTERDAY') return dStr === yestStr;
+      if (preset === 'LAST7') return (now.getTime() - new Date(isoDate).getTime()) <= 7 * 86400000;
+      if (preset === 'MONTH') return dStr.slice(0, 7) === todayStr.slice(0, 7);
+      if (preset === 'CUSTOM') {
+        if (fromDate && dStr < fromDate) return false;
+        if (toDate && dStr > toDate) return false;
+        return true;
+      }
+      return true;
+    }
+
+    /* ----------------------------------------------------
+       1. OVERVIEW VIEW
+       ---------------------------------------------------- */
+    function renderOverviewView(container) {
+      const role = currentUser.role;
+      let visibleTasks = DB.tasks;
+      if (role === 'Animation') visibleTasks = DB.tasks.filter(t => t.createdById === currentUser.id);
+      if (role === 'Editing') visibleTasks = DB.tasks.filter(t => t.assignedToId === currentUser.id);
+
+      const avail = visibleTasks.filter(t => t.status === 'Available').length;
+      const inProg = visibleTasks.filter(t => t.status === 'Assigned' || t.status === 'In Progress').length;
+      const submitted = visibleTasks.filter(t => t.status === 'Submitted').length;
+      const approved = visibleTasks.filter(t => t.status === 'Approved').length;
+
+      container.innerHTML = `
+        <div class="space-y-6">
+          <div class="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 rounded-3xl p-6 sm:p-8 text-white shadow-xl flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <span class="px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-indigo-500/20 text-indigo-300 border border-indigo-400/30">${role} Portal</span>
+              <h2 class="text-2xl sm:text-3xl font-extrabold font-display mt-2">Welcome, ${currentUser.name}</h2>
+              <p class="text-xs text-slate-300 mt-1">Sunday is an official off day (Quota: 0) • Today is ${new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric', year: 'numeric' })}</p>
+            </div>
+            <div class="flex flex-wrap gap-2">
+              ${(role === 'Admin' || role === 'Super Admin') ? `
+                <button onclick="navigateTo('finalized-videos')" class="px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs transition flex items-center gap-1.5">
+                  <i data-lucide="film" class="w-4 h-4"></i> Finalized Videos
+                </button>
+              ` : ''}
+              <button onclick="navigateTo('personal-attendance')" class="px-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white font-bold text-xs transition flex items-center gap-1.5">
+                <i data-lucide="clock" class="w-4 h-4"></i> Attendance Timer
+              </button>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs">
+              <div class="text-xs font-bold text-slate-400 uppercase">Unassigned / Ready</div>
+              <div class="text-2xl font-extrabold font-display text-slate-900 mt-1">${avail}</div>
+              <div class="text-[11px] text-slate-500 mt-1">Awaiting editor assignment</div>
+            </div>
+            <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs">
+              <div class="text-xs font-bold text-blue-600 uppercase">Assigned / Editing</div>
+              <div class="text-2xl font-extrabold font-display text-blue-700 mt-1">${inProg}</div>
+              <div class="text-[11px] text-slate-500 mt-1">Active production queue</div>
+            </div>
+            <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs">
+              <div class="text-xs font-bold text-amber-600 uppercase">Submitted for QC</div>
+              <div class="text-2xl font-extrabold font-display text-amber-700 mt-1">${submitted}</div>
+              <div class="text-[11px] text-slate-500 mt-1">Ready for Admin review</div>
+            </div>
+            <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs">
+              <div class="text-xs font-bold text-emerald-600 uppercase">Approved / Done</div>
+              <div class="text-2xl font-extrabold font-display text-emerald-700 mt-1">${approved}</div>
+              <div class="text-[11px] text-slate-500 mt-1">Finalized master cuts</div>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    /* ----------------------------------------------------
+       2. ANIMATION TASK MANAGEMENT (WITH 24H DELETE & FILTERS)
+       ---------------------------------------------------- */
+    function renderAnimationManagementView(container) {
+      const isAdmin = currentUser.role === 'Admin' || currentUser.role === 'Super Admin';
+      let list = DB.tasks.slice();
+
+      if (!isAdmin) {
+        list = list.filter(t => t.createdById === currentUser.id);
+      }
+
+      if (animFilter.search) {
+        const q = animFilter.search.toLowerCase();
+        list = list.filter(t => t.taskNumber.toLowerCase().includes(q) || t.carCompany.toLowerCase().includes(q) || t.carModel.toLowerCase().includes(q) || (t.creatorName && t.creatorName.toLowerCase().includes(q)));
+      }
+      if (animFilter.staff !== 'ALL') list = list.filter(t => t.createdById === animFilter.staff);
+      if (animFilter.status !== 'ALL') list = list.filter(t => t.status === animFilter.status);
+      if (animFilter.type !== 'ALL') list = list.filter(t => t.type === animFilter.type);
+      list = list.filter(t => matchesDatePreset(t.createdAt, animFilter.datePreset));
+
+      const animators = DB.users.filter(u => u.role === 'Animation');
+
+      container.innerHTML = `
+        <div class="bg-white rounded-3xl border border-slate-200/80 shadow-xs p-5 sm:p-6 space-y-5">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-100">
+            <div>
+              <h3 class="font-display font-bold text-slate-900 text-base">${isAdmin ? 'All Animation Tasks' : 'My Animation Tasks'} (${list.length})</h3>
+              <p class="text-xs text-slate-500">Mandatory Google Drive links • Deletion allowed only within 24 hours of creation</p>
+            </div>
+            <button onclick="openCreateTaskModal()" class="py-2.5 px-4 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs transition flex items-center gap-1.5 self-start sm:self-auto">
+              <i data-lucide="plus-circle" class="w-4 h-4"></i> Create Animation Task
+            </button>
+          </div>
+
+          <!-- Filter Bar -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 bg-slate-50 p-3.5 rounded-2xl border border-slate-200/70 text-xs">
+            <input type="text" value="${animFilter.search}" oninput="animFilter.search=this.value; renderAnimationManagementView(document.getElementById('main-view-container'))" placeholder="Search Task #, Car..." class="px-3 py-2 bg-white border border-slate-200 rounded-xl">
+            <select onchange="animFilter.datePreset=this.value; renderAnimationManagementView(document.getElementById('main-view-container'))" class="px-3 py-2 bg-white border border-slate-200 rounded-xl font-medium">
+              <option value="ALL" ${animFilter.datePreset==='ALL'?'selected':''}>All Dates (Latest)</option>
+              <option value="TODAY" ${animFilter.datePreset==='TODAY'?'selected':''}>Today</option>
+              <option value="YESTERDAY" ${animFilter.datePreset==='YESTERDAY'?'selected':''}>Yesterday</option>
+              <option value="LAST7" ${animFilter.datePreset==='LAST7'?'selected':''}>Last 7 Days</option>
+              <option value="MONTH" ${animFilter.datePreset==='MONTH'?'selected':''}>This Month</option>
+            </select>
+            ${isAdmin ? `
+              <select onchange="animFilter.staff=this.value; renderAnimationManagementView(document.getElementById('main-view-container'))" class="px-3 py-2 bg-white border border-slate-200 rounded-xl font-medium">
+                <option value="ALL" ${animFilter.staff==='ALL'?'selected':''}>All Animators</option>
+                ${animators.map(a => `<option value="${a.id}" ${animFilter.staff===a.id?'selected':''}>${a.name}</option>`).join('')}
+              </select>
+            ` : ''}
+            <select onchange="animFilter.type=this.value; renderAnimationManagementView(document.getElementById('main-view-container'))" class="px-3 py-2 bg-white border border-slate-200 rounded-xl font-medium">
+              <option value="ALL" ${animFilter.type==='ALL'?'selected':''}>All Types</option>
+              <option value="Normal" ${animFilter.type==='Normal'?'selected':''}>Normal</option>
+              <option value="Urgent" ${animFilter.type==='Urgent'?'selected':''}>Urgent</option>
+              <option value="Company" ${animFilter.type==='Company'?'selected':''}>Company</option>
+            </select>
+            <select onchange="animFilter.status=this.value; renderAnimationManagementView(document.getElementById('main-view-container'))" class="px-3 py-2 bg-white border border-slate-200 rounded-xl font-medium">
+              <option value="ALL" ${animFilter.status==='ALL'?'selected':''}>All Statuses</option>
+              <option value="Available" ${animFilter.status==='Available'?'selected':''}>Available</option>
+              <option value="Assigned" ${animFilter.status==='Assigned'?'selected':''}>Assigned</option>
+              <option value="Submitted" ${animFilter.status==='Submitted'?'selected':''}>Submitted</option>
+              <option value="Approved" ${animFilter.status==='Approved'?'selected':''}>Approved</option>
+            </select>
+          </div>
+
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs text-slate-600 min-w-[680px]">
+              <thead class="text-[11px] uppercase font-bold text-slate-400 bg-slate-50">
+                <tr>
+                  <th class="py-3 px-3">Task #</th>
+                  <th class="py-3 px-3">Car Company & Model</th>
+                  <th class="py-3 px-3">Type</th>
+                  <th class="py-3 px-3">Animator</th>
+                  <th class="py-3 px-3">Drive Assets</th>
+                  <th class="py-3 px-3">Created</th>
+                  <th class="py-3 px-3">Status</th>
+                  <th class="py-3 px-3 text-right">Delete (Under 24h)</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-100 font-medium">
+                ${list.length === 0 ? `<tr><td colspan="8" class="py-8 text-center text-slate-400">No animation tasks match the filter criteria.</td></tr>` : list.map(t => {
+                  const hoursOld = (Date.now() - new Date(t.createdAt).getTime()) / 3600000;
+                  const canDelete = hoursOld < 24;
+                  const hoursLeft = Math.max(0, Math.ceil(24 - hoursOld));
+                  return `
+                    <tr class="hover:bg-slate-50/80">
+                      <td class="py-3 px-3 font-mono font-bold text-slate-900">#${t.taskNumber}</td>
+                      <td class="py-3 px-3"><div class="font-bold text-slate-800">${t.carCompany}</div><div class="text-[11px] text-slate-500">${t.carModel}</div></td>
+                      <td class="py-3 px-3">${renderTaskTypeBadge(t.type)}</td>
+                      <td class="py-3 px-3 font-semibold text-slate-700">${t.creatorName}</td>
+                      <td class="py-3 px-3"><a href="${t.driveLink}" target="_blank" class="text-indigo-600 font-bold hover:underline inline-flex items-center gap-1"><i data-lucide="external-link" class="w-3 h-3"></i> Drive Link</a></td>
+                      <td class="py-3 px-3 text-slate-500">${formatDateRelative(t.createdAt)}</td>
+                      <td class="py-3 px-3">${renderTaskStatusBadge(t.status)}</td>
+                      <td class="py-3 px-3 text-right">
+                        ${canDelete ? `
+                          <button onclick="deleteAnimationTask('${t.id}')" class="px-2.5 py-1 rounded-lg bg-rose-50 text-rose-700 hover:bg-rose-100 font-bold text-[11px]">
+                            Delete (${hoursLeft}h left)
+                          </button>
+                        ` : `<span class="text-[10px] text-slate-400 italic">Locked (&gt;24h)</span>`}
+                      </td>
+                    </tr>
+                  `;
+                }).join('')}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      `;
+      refreshIcons();
+    }
+
+    function deleteAnimationTask(id) {
+      const task = DB.tasks.find(t => t.id === id);
+      if (!task) return;
+      const hoursOld = (Date.now() - new Date(task.createdAt).getTime()) / 3600000;
+      if (hoursOld >= 24) {
+        showToast('Deletion locked: Animation tasks can only be deleted within 24 hours of creation.', 'error');
+        return;
+      }
+      DB.tasks = DB.tasks.filter(t => t.id !== id);
+      saveState();
+      showToast(`Animation Task #${task.taskNumber} deleted.`, 'info');
+      navigateTo(currentRoute);
+    }
+
+    /* ----------------------------------------------------
+       3. BULK EDITING TASK ASSIGNMENT
+       ---------------------------------------------------- */
+    function renderEditingAssignmentView(container) {
+      const available = DB.tasks.filter(t => t.status === 'Available');
+      const editors = DB.users.filter(u => u.role === 'Editing');
+
+      container.innerHTML = `
+        <div class="space-y-6">
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            ${editors.map(ed => {
+              const activeCount = DB.tasks.filter(t => t.assignedToId === ed.id && (t.status === 'Assigned' || t.status === 'In Progress')).length;
+              const doneCount = DB.tasks.filter(t => t.assignedToId === ed.id && t.status === 'Approved').length;
+              return `
+                <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs">
+                  <div class="flex items-center justify-between mb-2">
+                    <span class="font-bold text-slate-900 text-sm">${ed.name}</span>
+                    <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700">Quota: ${ed.dailyTarget}/day</span>
+                  </div>
+                  <div class="text-xs text-slate-500 flex justify-between">
+                    <span>Assigned Active: <strong class="text-indigo-600">${activeCount}</strong></span>
+                    <span>Approved: <strong class="text-emerald-600">${doneCount}</strong></span>
+                  </div>
+                </div>
+              `;
+            }).join('')}
+          </div>
+
+          <div class="bg-white rounded-3xl border border-slate-200/80 shadow-xs p-5 sm:p-6">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-100">
+              <div>
+                <h3 class="font-display font-bold text-slate-900 text-base">Unassigned Animation Tasks (${available.length})</h3>
+                <p class="text-xs text-slate-500">Select multiple tasks using checkboxes and assign in bulk to any editor</p>
+              </div>
+              <button onclick="openBulkAssignModal()" class="py-2.5 px-4 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs transition flex items-center gap-1.5 self-start sm:self-auto">
+                <i data-lucide="user-plus" class="w-4 h-4"></i> Assign Selected (${selectedTaskIdsForBulk.size})
+              </button>
+            </div>
+
+            <div class="overflow-x-auto mt-4">
+              <table class="w-full text-left text-xs text-slate-600 min-w-[600px]">
+                <thead class="text-[11px] uppercase font-bold text-slate-400 bg-slate-50">
+                  <tr>
+                    <th class="py-3 px-3 w-10"><input type="checkbox" onchange="toggleSelectAllAvailable(this.checked)" class="rounded text-indigo-600"></th>
+                    <th class="py-3 px-3">Task #</th>
+                    <th class="py-3 px-3">Vehicle</th>
+                    <th class="py-3 px-3">Type</th>
+                    <th class="py-3 px-3">Animator</th>
+                    <th class="py-3 px-3">Drive Link</th>
+                    <th class="py-3 px-3 text-right">Quick Assign</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100 font-medium">
+                  ${available.length === 0 ? `<tr><td colspan="7" class="py-8 text-center text-slate-400">All animation tasks have been assigned.</td></tr>` : available.map(t => `
+                    <tr class="hover:bg-slate-50/80">
+                      <td class="py-3 px-3"><input type="checkbox" ${selectedTaskIdsForBulk.has(t.id)?'checked':''} onchange="toggleTaskSelect('${t.id}', this.checked)" class="rounded text-indigo-600"></td>
+                      <td class="py-3 px-3 font-mono font-bold text-slate-900">#${t.taskNumber}</td>
+                      <td class="py-3 px-3 font-bold text-slate-800">${t.carCompany} ${t.carModel}</td>
+                      <td class="py-3 px-3">${renderTaskTypeBadge(t.type)}</td>
+                      <td class="py-3 px-3">${t.creatorName}</td>
+                      <td class="py-3 px-3"><a href="${t.driveLink}" target="_blank" class="text-indigo-600 font-bold hover:underline">Assets</a></td>
+                      <td class="py-3 px-3 text-right">
+                        <button onclick="quickAssignSingle('${t.id}')" class="px-3 py-1 rounded-lg bg-indigo-50 text-indigo-700 hover:bg-indigo-100 font-bold text-[11px]">Assign</button>
+                      </td>
+                    </tr>
+                  `).join('')}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      `;
+      refreshIcons();
+    }
+
+    function toggleTaskSelect(id, checked) {
+      if (checked) selectedTaskIdsForBulk.add(id);
+      else selectedTaskIdsForBulk.delete(id);
+      navigateTo(currentRoute);
+    }
+
+    function toggleSelectAllAvailable(checked) {
+      const avail = DB.tasks.filter(t => t.status === 'Available');
+      if (checked) avail.forEach(t => selectedTaskIdsForBulk.add(t.id));
+      else selectedTaskIdsForBulk.clear();
+      navigateTo(currentRoute);
+    }
+
+    function quickAssignSingle(id) {
+      selectedTaskIdsForBulk.clear();
+      selectedTaskIdsForBulk.add(id);
+      openBulkAssignModal();
+    }
+
+    function openBulkAssignModal() {
+      if (selectedTaskIdsForBulk.size === 0) {
+        showToast('Select at least one task first.', 'error');
+        return;
+      }
+      const editors = DB.users.filter(u => u.role === 'Editing');
+      document.getElementById('bulk-editor-select').innerHTML = editors.map(e => `<option value="${e.id}">${e.name} (Quota: ${e.dailyTarget}/day)</option>`).join('');
+      document.getElementById('bulk-assign-summary').innerText = `Assigning ${selectedTaskIdsForBulk.size} task(s) to selected editor.`;
+      openModal('bulk-assign-modal');
+    }
+
+    function confirmBulkAssignment() {
+      const editorId = document.getElementById('bulk-editor-select').value;
+      const type = document.getElementById('bulk-type-select').value;
+      const hours = parseInt(document.getElementById('bulk-deadline-select').value, 10);
+      const editor = DB.users.find(u => u.id === editorId);
+      if (!editor) return;
+
+      const count = selectedTaskIdsForBulk.size;
+      const deadlineIso = new Date(Date.now() + hours * 3600000).toISOString();
+
+      selectedTaskIdsForBulk.forEach(id => {
+        const t = DB.tasks.find(item => item.id === id);
+        if (t) {
+          t.status = 'Assigned';
+          t.type = type;
+          t.assignedToId = editor.id;
+          t.assignedToName = editor.name;
+          t.assignedAt = new Date().toISOString();
+          t.deadline = deadlineIso;
+        }
+      });
+
+      selectedTaskIdsForBulk.clear();
+      saveState();
+      closeModal('bulk-assign-modal');
+
+      showWorkflowPopup(
+        `${count} New Task(s) Assigned!`,
+        `Editor Notification Triggered for ${editor.name}`,
+        `<div class="font-bold text-indigo-900">${count} video task(s) have been assigned to ${editor.name} with a ${hours}-hour deadline.</div>`,
+        'editing-assignment',
+        'Done'
+      );
+      navigateTo(currentRoute);
+    }
+
+    /* ----------------------------------------------------
+       4. QUALITY CONTROL & SUBMITTED VIDEOS QUEUE
+       ---------------------------------------------------- */
+    function renderQcDashboardView(container) {
+      let list = DB.tasks.filter(t => t.status === 'Submitted');
+
+      if (qcFilter.search) {
+        const q = qcFilter.search.toLowerCase();
+        list = list.filter(t => t.taskNumber.toLowerCase().includes(q) || t.carCompany.toLowerCase().includes(q) || t.carModel.toLowerCase().includes(q) || (t.assignedToName && t.assignedToName.toLowerCase().includes(q)));
+      }
+      if (qcFilter.staff !== 'ALL') list = list.filter(t => t.assignedToId === qcFilter.staff);
+      if (qcFilter.type !== 'ALL') list = list.filter(t => t.type === qcFilter.type);
+      list = list.filter(t => matchesDatePreset(t.submittedAt || t.createdAt, qcFilter.datePreset));
+
+      const editors = DB.users.filter(u => u.role === 'Editing');
+
+      container.innerHTML = `
+        <div class="bg-white rounded-3xl border border-slate-200/80 shadow-xs p-5 sm:p-6 space-y-5">
+          <div>
+            <h3 class="font-display font-bold text-slate-900 text-base">Submitted Videos Awaiting Quality Control (${list.length})</h3>
+            <p class="text-xs text-slate-500">Filter by editor, date, or task type and approve or return for revision</p>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 bg-slate-50 p-3.5 rounded-2xl border border-slate-200/70 text-xs">
+            <input type="text" value="${qcFilter.search}" oninput="qcFilter.search=this.value; renderQcDashboardView(document.getElementById('main-view-container'))" placeholder="Search Task #, Car, Editor..." class="px-3 py-2 bg-white border border-slate-200 rounded-xl">
+            <select onchange="qcFilter.datePreset=this.value; renderQcDashboardView(document.getElementById('main-view-container'))" class="px-3 py-2 bg-white border border-slate-200 rounded-xl font-medium">
+              <option value="ALL" ${qcFilter.datePreset==='ALL'?'selected':''}>All Dates (Latest)</option>
+              <option value="TODAY" ${qcFilter.datePreset==='TODAY'?'selected':''}>Today</option>
+              <option value="YESTERDAY" ${qcFilter.datePreset==='YESTERDAY'?'selected':''}>Yesterday</option>
+              <option value="LAST7" ${qcFilter.datePreset==='LAST7'?'selected':''}>Last 7 Days</option>
+            </select>
+            <select onchange="qcFilter.staff=this.value; renderQcDashboardView(document.getElementById('main-view-container'))" class="px-3 py-2 bg-white border border-slate-200 rounded-xl font-medium">
+              <option value="ALL" ${qcFilter.staff==='ALL'?'selected':''}>All Editors</option>
+              ${editors.map(e => `<option value="${e.id}" ${qcFilter.staff===e.id?'selected':''}>${e.name}</option>`).join('')}
+            </select>
+            <select onchange="qcFilter.type=this.value; renderQcDashboardView(document.getElementById('main-view-container'))" class="px-3 py-2 bg-white border border-slate-200 rounded-xl font-medium">
+              <option value="ALL" ${qcFilter.type==='ALL'?'selected':''}>All Task Types</option>
+              <option value="Normal" ${qcFilter.type==='Normal'?'selected':''}>Normal</option>
+              <option value="Urgent" ${qcFilter.type==='Urgent'?'selected':''}>Urgent</option>
+              <option value="Company" ${qcFilter.type==='Company'?'selected':''}>Company</option>
+            </select>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            ${list.length === 0 ? `<div class="col-span-full py-12 text-center text-slate-400">No submitted videos pending QC review.</div>` : list.map(t => `
+              <div class="bg-slate-50 rounded-2xl border border-slate-200 p-5 flex flex-col justify-between">
+                <div>
+                  <div class="flex items-center justify-between mb-2">
+                    <span class="font-mono font-bold text-slate-900 text-sm">#${t.taskNumber}</span>
+                    ${renderTaskTypeBadge(t.type)}
+                  </div>
+                  <div class="font-bold text-slate-900 text-base">${t.carCompany} ${t.carModel}</div>
+                  <div class="text-xs text-slate-500 mt-1">Editor: <strong class="text-slate-800">${t.assignedToName}</strong> • Animator: ${t.creatorName}</div>
+                  ${t.submissionNotes ? `<div class="mt-2 p-2.5 bg-white rounded-xl border border-slate-200/80 text-[11px] text-slate-600 italic">"${t.submissionNotes}"</div>` : ''}
+                </div>
+                <div class="flex gap-2 mt-4 pt-3 border-t border-slate-200/70">
+                  <a href="${t.submissionUrl}" target="_blank" class="flex-1 py-2 px-3 rounded-xl bg-white border border-slate-200 text-indigo-600 font-bold text-xs text-center hover:bg-indigo-50">Watch Drive Video</a>
+                  <button onclick="openQcModal('${t.id}')" class="flex-1 py-2 px-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs">QC Decision</button>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      `;
+      refreshIcons();
+    }
+
+    /* ----------------------------------------------------
+       5. FINALIZED APPROVED VIDEOS (LIST VIEW + FILTERS)
+       ---------------------------------------------------- */
+    function renderFinalizedApprovedVideosView(container) {
+      let list = DB.tasks.filter(t => t.status === 'Approved');
+
+      if (finalizedFilter.search) {
+        const q = finalizedFilter.search.toLowerCase();
+        list = list.filter(t => t.taskNumber.toLowerCase().includes(q) || t.carCompany.toLowerCase().includes(q) || t.carModel.toLowerCase().includes(q) || (t.assignedToName && t.assignedToName.toLowerCase().includes(q)) || (t.creatorName && t.creatorName.toLowerCase().includes(q)));
+      }
+      if (finalizedFilter.type !== 'ALL') list = list.filter(t => t.type === finalizedFilter.type);
+      if (finalizedFilter.staff !== 'ALL') list = list.filter(t => t.assignedToId === finalizedFilter.staff || t.createdById === finalizedFilter.staff);
+      list = list.filter(t => matchesDatePreset(t.approvedAt || t.createdAt, finalizedFilter.datePreset, finalizedFilter.dateFrom, finalizedFilter.dateTo));
+
+      const staffList = DB.users.filter(u => u.role === 'Animation' || u.role === 'Editing');
+
+      container.innerHTML = `
+        <div class="bg-white rounded-3xl border border-slate-200/80 shadow-xs p-5 sm:p-6 space-y-5">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-100">
+            <div>
+              <h3 class="font-display font-bold text-slate-900 text-base">Finalized Approved Videos (${list.length})</h3>
+              <p class="text-xs text-slate-500">Complete list view of approved videos with completion timestamps and multi-criteria filters</p>
+            </div>
+            <button onclick="exportApprovedVideosCSV()" class="py-2 px-3.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 self-start sm:self-auto">
+              <i data-lucide="download" class="w-4 h-4"></i> Export Approved CSV
+            </button>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 bg-slate-50 p-3.5 rounded-2xl border border-slate-200/70 text-xs">
+            <input type="text" value="${finalizedFilter.search}" oninput="finalizedFilter.search=this.value; renderFinalizedApprovedVideosView(document.getElementById('main-view-container'))" placeholder="Search Task #, Car, Staff..." class="px-3 py-2 bg-white border border-slate-200 rounded-xl">
+            <select onchange="finalizedFilter.datePreset=this.value; renderFinalizedApprovedVideosView(document.getElementById('main-view-container'))" class="px-3 py-2 bg-white border border-slate-200 rounded-xl font-medium">
+              <option value="ALL" ${finalizedFilter.datePreset==='ALL'?'selected':''}>Latest (All Dates)</option>
+              <option value="TODAY" ${finalizedFilter.datePreset==='TODAY'?'selected':''}>Today</option>
+              <option value="YESTERDAY" ${finalizedFilter.datePreset==='YESTERDAY'?'selected':''}>Yesterday</option>
+              <option value="LAST7" ${finalizedFilter.datePreset==='LAST7'?'selected':''}>Last 7 Days</option>
+              <option value="MONTH" ${finalizedFilter.datePreset==='MONTH'?'selected':''}>This Month</option>
+              <option value="CUSTOM" ${finalizedFilter.datePreset==='CUSTOM'?'selected':''}>Custom Date From/To</option>
+            </select>
+            <select onchange="finalizedFilter.type=this.value; renderFinalizedApprovedVideosView(document.getElementById('main-view-container'))" class="px-3 py-2 bg-white border border-slate-200 rounded-xl font-medium">
+              <option value="ALL" ${finalizedFilter.type==='ALL'?'selected':''}>All Task Types</option>
+              <option value="Normal" ${finalizedFilter.type==='Normal'?'selected':''}>Normal Tasks</option>
+              <option value="Urgent" ${finalizedFilter.type==='Urgent'?'selected':''}>Urgent Tasks</option>
+              <option value="Company" ${finalizedFilter.type==='Company'?'selected':''}>Company Tasks</option>
+            </select>
+            <select onchange="finalizedFilter.staff=this.value; renderFinalizedApprovedVideosView(document.getElementById('main-view-container'))" class="px-3 py-2 bg-white border border-slate-200 rounded-xl font-medium">
+              <option value="ALL" ${finalizedFilter.staff==='ALL'?'selected':''}>All Animators & Editors</option>
+              ${staffList.map(s => `<option value="${s.id}" ${finalizedFilter.staff===s.id?'selected':''}>${s.name} (${s.role})</option>`).join('')}
+            </select>
+            <button onclick="finalizedFilter={search:'',datePreset:'ALL',dateFrom:'',dateTo:'',type:'ALL',staff:'ALL'}; renderFinalizedApprovedVideosView(document.getElementById('main-view-container'))" class="py-2 px-3 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold rounded-xl">Reset Filters</button>
+
+            ${finalizedFilter.datePreset === 'CUSTOM' ? `
+              <div class="sm:col-span-2 flex gap-2">
+                <input type="date" value="${finalizedFilter.dateFrom}" onchange="finalizedFilter.dateFrom=this.value; renderFinalizedApprovedVideosView(document.getElementById('main-view-container'))" class="flex-1 px-2.5 py-1.5 bg-white border border-slate-200 rounded-xl">
+                <input type="date" value="${finalizedFilter.dateTo}" onchange="finalizedFilter.dateTo=this.value; renderFinalizedApprovedVideosView(document.getElementById('main-view-container'))" class="flex-1 px-2.5 py-1.5 bg-white border border-slate-200 rounded-xl">
+              </div>
+            ` : ''}
+          </div>
+
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs text-slate-600 min-w-[700px]">
+              <thead class="text-[11px] uppercase font-bold text-slate-400 bg-slate-50">
+                <tr>
+                  <th class="py-3 px-3">Task #</th>
+                  <th class="py-3 px-3">Car Company & Model</th>
+                  <th class="py-3 px-3">Type</th>
+                  <th class="py-3 px-3">Editor & Animator</th>
+                  <th class="py-3 px-3">Date Video Done</th>
+                  <th class="py-3 px-3">Turnaround</th>
+                  <th class="py-3 px-3">Approved By</th>
+                  <th class="py-3 px-3">Google Drive Link</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-100 font-medium">
+                ${list.length === 0 ? `<tr><td colspan="8" class="py-8 text-center text-slate-400">No finalized approved videos match your filter.</td></tr>` : list.map(t => {
+                  const startRef = t.assignedAt || t.createdAt;
+                  const endRef = t.approvedAt || new Date().toISOString();
+                  const hrs = Math.max(1, Math.round((new Date(endRef).getTime() - new Date(startRef).getTime()) / 3600000));
+                  return `
+                  <tr class="hover:bg-slate-50/80">
+                    <td class="py-3 px-3 font-mono font-bold text-slate-900">#${t.taskNumber}</td>
+                    <td class="py-3 px-3"><div class="font-bold text-slate-800">${t.carCompany}</div><div class="text-[11px] text-slate-500">${t.carModel}</div></td>
+                    <td class="py-3 px-3">${renderTaskTypeBadge(t.type)}</td>
+                    <td class="py-3 px-3"><div>Editor: <strong>${t.assignedToName || '—'}</strong></div><div class="text-[10px] text-slate-400">Animator: ${t.creatorName}</div></td>
+                    <td class="py-3 px-3 font-semibold text-slate-800">${t.approvedAt ? new Date(t.approvedAt).toLocaleString() : new Date(t.createdAt).toLocaleDateString()}</td>
+                    <td class="py-3 px-3 font-mono text-indigo-600 font-bold">${hrs}h</td>
+                    <td class="py-3 px-3 text-emerald-700 font-bold">${t.approvedBy || 'Admin QC'}</td>
+                    <td class="py-3 px-3"><a href="${t.submissionUrl || t.driveLink}" target="_blank" class="px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-700 font-bold hover:bg-emerald-100 inline-flex items-center gap-1"><i data-lucide="external-link" class="w-3 h-3"></i> Watch Cut</a></td>
+                  </tr>
+                `}).join('')}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      `;
+      refreshIcons();
+    }
+
+    /* ----------------------------------------------------
+       6. COMPANY & URGENT TASKS VIEW
+       ---------------------------------------------------- */
+    function renderCompanyUrgentTasksView(container) {
+      const specialTasks = DB.tasks.filter(t => t.type === 'Company' || t.type === 'Urgent');
+      container.innerHTML = `
+        <div class="bg-white rounded-3xl border border-slate-200/80 shadow-xs p-5 sm:p-6 space-y-4">
+          <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+            <div>
+              <h3 class="font-display font-bold text-slate-900 text-base">Company & Urgent Tasks (${specialTasks.length})</h3>
+              <p class="text-xs text-slate-500">High-priority rush deliveries and internal company promotional videos</p>
+            </div>
+            <button onclick="openCreateTaskModal()" class="py-2 px-3.5 bg-indigo-600 text-white rounded-xl text-xs font-bold">+ Add Task</button>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs text-slate-600 min-w-[600px]">
+              <thead class="text-[11px] uppercase font-bold text-slate-400 bg-slate-50">
+                <tr>
+                  <th class="py-3 px-3">Task #</th>
+                  <th class="py-3 px-3">Title / Vehicle</th>
+                  <th class="py-3 px-3">Category</th>
+                  <th class="py-3 px-3">Assigned Editor</th>
+                  <th class="py-3 px-3">Status</th>
+                  <th class="py-3 px-3">Drive Link</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-100 font-medium">
+                ${specialTasks.map(t => `
+                  <tr>
+                    <td class="py-3 px-3 font-mono font-bold">#${t.taskNumber}</td>
+                    <td class="py-3 px-3 font-bold text-slate-800">${t.carCompany} ${t.carModel}</td>
+                    <td class="py-3 px-3">${renderTaskTypeBadge(t.type)}</td>
+                    <td class="py-3 px-3">${t.assignedToName || 'Unassigned'}</td>
+                    <td class="py-3 px-3">${renderTaskStatusBadge(t.status)}</td>
+                    <td class="py-3 px-3"><a href="${t.submissionUrl || t.driveLink}" target="_blank" class="text-indigo-600 font-bold hover:underline">Open Link</a></td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      `;
+    }
+
+    /* ----------------------------------------------------
+       7. EDITOR WORKSTATION (STRICTLY OWN ASSIGNED TASKS)
+       ---------------------------------------------------- */
+    function renderEditorTasksView(container, mode) {
+      let myTasks = DB.tasks.filter(t => t.assignedToId === currentUser.id);
+      if (mode === 'assigned') myTasks = myTasks.filter(t => t.status === 'Assigned' || t.status === 'In Progress');
+      else if (mode === 'revisions') myTasks = myTasks.filter(t => t.status === 'Revision Required');
+      else if (mode === 'submitted') myTasks = myTasks.filter(t => t.status === 'Submitted');
+      else if (mode === 'approved') myTasks = myTasks.filter(t => t.status === 'Approved');
+
+      container.innerHTML = `
+        <div class="bg-white rounded-3xl border border-slate-200/80 shadow-xs p-5 sm:p-6">
+          <div class="pb-4 border-b border-slate-100 mb-5">
+            <h3 class="font-display font-bold text-slate-900 text-base">My Video Tasks (${myTasks.length})</h3>
+            <p class="text-xs text-slate-500">Editors only see tasks assigned directly to them and cannot create tasks</p>
+          </div>
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            ${myTasks.length === 0 ? `<div class="col-span-full py-12 text-center text-slate-400">No tasks in this view.</div>` : myTasks.map(t => `
+              <div class="bg-slate-50 rounded-2xl border border-slate-200 p-5 flex flex-col justify-between">
+                <div>
+                  <div class="flex items-center justify-between mb-2">
+                    <span class="font-mono font-bold text-slate-900 text-sm">#${t.taskNumber}</span>
+                    <div class="flex gap-1">${renderTaskTypeBadge(t.type)} ${renderTaskStatusBadge(t.status)}</div>
+                  </div>
+                  <div class="font-bold text-slate-900 text-base">${t.carCompany} ${t.carModel}</div>
+                  <div class="mt-3 p-3 bg-white rounded-xl border border-slate-200/70 text-xs space-y-1">
+                    <div class="flex justify-between"><span>Animation Assets:</span><a href="${t.driveLink}" target="_blank" class="text-indigo-600 font-bold hover:underline">Open Drive</a></div>
+                    <div class="flex justify-between"><span>Deadline:</span><span class="font-semibold">${t.deadline ? new Date(t.deadline).toLocaleDateString() : '24h'}</span></div>
+                  </div>
+                  ${t.status === 'Revision Required' ? `
+                    <div class="mt-3 p-3 bg-rose-50 border border-rose-200 rounded-xl text-xs text-rose-800">
+                      <div class="font-bold">QC Feedback (${t.errorCategory}):</div>
+                      <div class="mt-0.5 italic">"${t.errorDescription}"</div>
+                    </div>
+                  ` : ''}
+                </div>
+                <div class="mt-4 pt-3 border-t border-slate-200/80 flex gap-2">
+                  ${t.status === 'Assigned' ? `<button onclick="startEditorTask('${t.id}')" class="flex-1 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs">Start Task</button>` : ''}
+                  ${(t.status === 'Assigned' || t.status === 'In Progress' || t.status === 'Revision Required') ? `<button onclick="openSubmitModal('${t.id}')" class="flex-1 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs">Submit Video Link</button>` : ''}
+                </div>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      `;
+    }
+
+    function startEditorTask(id) {
+      const t = DB.tasks.find(item => item.id === id);
+      if (t) {
+        t.status = 'In Progress';
+        saveState();
+        showToast(`Task #${t.taskNumber} marked In Progress.`, 'info');
+        navigateTo(currentRoute);
+      }
+    }
+
+    function openSubmitModal(id) {
+      document.getElementById('submit-task-id').value = id;
+      document.getElementById('submit-drive-url').value = '';
+      document.getElementById('submit-notes').value = '';
+      openModal('submit-video-modal');
+    }
+
+    function handleEditorVideoSubmit(e) {
+      e.preventDefault();
+      const id = document.getElementById('submit-task-id').value;
+      const url = document.getElementById('submit-drive-url').value.trim();
+      const notes = document.getElementById('submit-notes').value.trim();
+
+      const t = DB.tasks.find(item => item.id === id);
+      if (!t) return;
+      t.status = 'Submitted';
+      t.submissionUrl = url;
+      t.submissionNotes = notes;
+      t.submittedAt = new Date().toISOString();
+      saveState();
+      closeModal('submit-video-modal');
+
+      const totalPendingQc = DB.tasks.filter(item => item.status === 'Submitted').length;
+      showWorkflowPopup(
+        `Video Submitted for QC!`,
+        `${totalPendingQc} video(s) now available for Admin checking`,
+        `<div class="font-bold text-emerald-900">Task #${t.taskNumber} (${t.carCompany} ${t.carModel}) has been submitted to Admin Quality Control.</div>`,
+        'editor-submitted',
+        'View Submitted Videos'
+      );
+      navigateTo(currentRoute);
+    }
+
+    /* ----------------------------------------------------
+       8. SALES TASKS & CHECKER (STRICTLY SEPARATED)
+       ---------------------------------------------------- */
+    function renderMySalesTasksView(container) {
+      const mySales = DB.salesTasks.filter(s => s.creatorId === currentUser.id);
+      const approved = mySales.filter(s => s.status === 'Approved').length;
+      const quota = isSunday(new Date()) ? 0 : (currentUser.dailyTarget || 12);
+      const pct = quota === 0 ? 100 : Math.min(100, Math.round((mySales.length / quota) * 100));
+
+      container.innerHTML = `
+        <div class="space-y-6">
+          <!-- Sales Person Personal Daily Quota Performance -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs">
+              <div class="text-xs font-bold text-slate-400 uppercase">My Daily Quota</div>
+              <div class="text-2xl font-extrabold text-teal-700 mt-1">${isSunday(new Date()) ? '0 (Sunday Off)' : `${quota} Tasks`}</div>
+            </div>
+            <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs">
+              <div class="text-xs font-bold text-slate-400 uppercase">Tasks Added</div>
+              <div class="text-2xl font-extrabold text-slate-900 mt-1">${mySales.length}</div>
+              <div class="text-[11px] text-teal-600 font-bold mt-1">${pct}% of Daily Quota</div>
+            </div>
+            <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs">
+              <div class="text-xs font-bold text-emerald-600 uppercase">Approved by Checker</div>
+              <div class="text-2xl font-extrabold text-emerald-700 mt-1">${approved}</div>
+            </div>
+            <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs">
+              <div class="text-xs font-bold text-amber-600 uppercase">Pending Check</div>
+              <div class="text-2xl font-extrabold text-amber-700 mt-1">${mySales.filter(s => s.status === 'Pending Review').length}</div>
+            </div>
+          </div>
+
+          <div class="bg-white rounded-3xl border border-slate-200/80 shadow-xs p-5 sm:p-6">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-100">
+              <div>
+                <h3 class="font-display font-bold text-slate-900 text-base">My Submitted Sales Tasks (${mySales.length})</h3>
+                <p class="text-xs text-slate-500">Simple sales form: Task Number, Company Name, Car Name</p>
+              </div>
+              <button onclick="openCreateSalesTaskModal()" class="py-2.5 px-4 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs self-start sm:self-auto">+ Add Sales Task</button>
+            </div>
+            <div class="overflow-x-auto mt-4">
+              <table class="w-full text-left text-xs text-slate-600 min-w-[550px]">
+                <thead class="text-[11px] uppercase font-bold text-slate-400 bg-slate-50">
+                  <tr>
+                    <th class="py-3 px-3">Task #</th>
+                    <th class="py-3 px-3">Company Name</th>
+                    <th class="py-3 px-3">Car Name</th>
+                    <th class="py-3 px-3">Date</th>
+                    <th class="py-3 px-3">Status</th>
+                    <th class="py-3 px-3">Checker Feedback</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100 font-medium">
+                  ${mySales.map(s => `
+                    <tr>
+                      <td class="py-3 px-3 font-mono font-bold text-slate-900">${s.taskNumber}</td>
+                      <td class="py-3 px-3 font-bold text-slate-800">${s.companyName}</td>
+                      <td class="py-3 px-3">${s.carName}</td>
+                      <td class="py-3 px-3 text-slate-500">${new Date(s.createdAt).toLocaleDateString()}</td>
+                      <td class="py-3 px-3">
+                        <span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${s.status==='Approved'?'bg-emerald-100 text-emerald-800':s.status==='Disapproved'?'bg-rose-100 text-rose-800':'bg-amber-100 text-amber-800'}">${s.status}</span>
+                      </td>
+                      <td class="py-3 px-3 text-slate-500">${s.feedback || '—'}</td>
+                    </tr>
+                  `).join('')}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderSalesCheckerQueueView(container) {
+      const salesReps = DB.users.filter(u => u.role === 'Sales Tasks');
+      const pending = DB.salesTasks.filter(s => s.status === 'Pending Review');
+
+      container.innerHTML = `
+        <div class="bg-white rounded-3xl border border-slate-200/80 shadow-xs p-5 sm:p-6 space-y-6">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-100">
+            <div>
+              <h3 class="font-display font-bold text-slate-900 text-base">Sales Tasks Checker Queue (${pending.length} Pending)</h3>
+              <p class="text-xs text-slate-500">Grouped by Sales Person name • Select All below each person to Approve or Disapprove</p>
+            </div>
+            <div class="flex flex-wrap gap-2">
+              <button onclick="openCreateSalesTaskModal()" class="py-2 px-3.5 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs">+ Add Sales Task</button>
+              <button onclick="approveSelectedSalesTasks()" class="py-2 px-3.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs">Approve Selected (${selectedSalesTaskIdsForBulk.size})</button>
+              <button onclick="openDisapproveSalesModal()" class="py-2 px-3.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs">Disapprove Selected</button>
+            </div>
+          </div>
+
+          <div class="space-y-5">
+            ${salesReps.map(rep => {
+              const repTasks = pending.filter(s => s.creatorId === rep.id);
+              return `
+                <div class="border border-slate-200 rounded-2xl p-4 bg-slate-50/60">
+                  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 mb-3 border-b border-slate-200">
+                    <div class="font-bold text-slate-900 text-sm">${rep.name} (${repTasks.length} pending tasks)</div>
+                    <label class="flex items-center gap-2 text-xs font-bold text-teal-700 cursor-pointer">
+                      <input type="checkbox" onchange="toggleSelectAllForRep('${rep.id}', this.checked)" class="rounded text-teal-600">
+                      <span>Select All Tasks for ${rep.name}</span>
+                    </label>
+                  </div>
+                  ${repTasks.length === 0 ? `<div class="text-xs text-slate-400 py-3 text-center">No pending tasks for ${rep.name}.</div>` : `
+                    <div class="space-y-2">
+                      ${repTasks.map(t => `
+                        <div class="p-3 bg-white rounded-xl border border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
+                          <label class="flex items-center gap-3 cursor-pointer">
+                            <input type="checkbox" ${selectedSalesTaskIdsForBulk.has(t.id)?'checked':''} onchange="toggleSalesTaskSelection('${t.id}', this.checked)" class="rounded text-teal-600">
+                            <span><strong class="font-mono">${t.taskNumber}</strong> • <strong>${t.companyName}</strong> — ${t.carName}</span>
+                          </label>
+                          <div class="flex gap-2 self-end sm:self-auto">
+                            <button onclick="approveSingleSalesTask('${t.id}')" class="px-3 py-1 rounded-lg bg-emerald-50 text-emerald-700 font-bold hover:bg-emerald-100">Approve</button>
+                            <button onclick="openDisapproveSalesModal('${t.id}')" class="px-3 py-1 rounded-lg bg-rose-50 text-rose-700 font-bold hover:bg-rose-100">Disapprove</button>
+                          </div>
+                        </div>
+                      `).join('')}
+                    </div>
+                  `}
+                </div>
+              `;
+            }).join('')}
+          </div>
+        </div>
+      `;
+    }
+
+    function renderSalesTasksPerformanceView(container) {
+      const salesReps = DB.users.filter(u => u.role === 'Sales Tasks');
+      container.innerHTML = `
+        <div class="bg-white rounded-3xl border border-slate-200/80 shadow-xs p-5 sm:p-6">
+          <div class="pb-4 border-b border-slate-100 mb-4">
+            <h3 class="font-display font-bold text-slate-900 text-base">Sales Tasks Performance & Daily Quotas</h3>
+            <p class="text-xs text-slate-500">Checker can monitor daily performance of every sales person and change their daily task quota</p>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs text-slate-600 min-w-[600px]">
+              <thead class="text-[11px] uppercase font-bold text-slate-400 bg-slate-50">
+                <tr>
+                  <th class="py-3 px-3">Sales Person</th>
+                  <th class="py-3 px-3">Daily Task Quota</th>
+                  <th class="py-3 px-3">Tasks Submitted</th>
+                  <th class="py-3 px-3">Approved</th>
+                  <th class="py-3 px-3">Disapproved</th>
+                  <th class="py-3 px-3">Performance %</th>
+                  <th class="py-3 px-3 text-right">Update Quota</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-100 font-medium">
+                ${salesReps.map(rep => {
+                  const all = DB.salesTasks.filter(s => s.creatorId === rep.id);
+                  const app = all.filter(s => s.status === 'Approved').length;
+                  const dis = all.filter(s => s.status === 'Disapproved').length;
+                  const quota = rep.dailyTarget || 12;
+                  const pct = Math.min(100, Math.round((all.length / quota) * 100));
+                  return `
+                    <tr>
+                      <td class="py-3 px-3 font-bold text-slate-900">${rep.name}</td>
+                      <td class="py-3 px-3 font-mono font-bold text-teal-700">${quota} tasks/day</td>
+                      <td class="py-3 px-3 font-bold">${all.length}</td>
+                      <td class="py-3 px-3 text-emerald-700 font-bold">${app}</td>
+                      <td class="py-3 px-3 text-rose-700 font-bold">${dis}</td>
+                      <td class="py-3 px-3 font-bold text-indigo-600">${pct}%</td>
+                      <td class="py-3 px-3 text-right">
+                        <button onclick="openEditQuotaModal('${rep.id}', '${rep.name}', ${quota})" class="px-3 py-1 rounded-lg bg-teal-50 text-teal-700 font-bold hover:bg-teal-100">Change Quota</button>
+                      </td>
+                    </tr>
+                  `;
+                }).join('')}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderSalesAuditHistoryView(container) {
+      let list = DB.salesTasks.slice();
+      if (salesAuditFilter.search) {
+        const q = salesAuditFilter.search.toLowerCase();
+        list = list.filter(s => s.taskNumber.toLowerCase().includes(q) || s.companyName.toLowerCase().includes(q) || s.carName.toLowerCase().includes(q));
+      }
+      if (salesAuditFilter.rep !== 'ALL') list = list.filter(s => s.creatorId === salesAuditFilter.rep);
+      if (salesAuditFilter.status !== 'ALL') list = list.filter(s => s.status === salesAuditFilter.status);
+      list = list.filter(s => matchesDatePreset(s.createdAt, salesAuditFilter.datePreset));
+
+      const reps = DB.users.filter(u => u.role === 'Sales Tasks');
+
+      container.innerHTML = `
+        <div class="bg-white rounded-3xl border border-slate-200/80 shadow-xs p-5 sm:p-6 space-y-5">
+          <div>
+            <h3 class="font-display font-bold text-slate-900 text-base">Approved & Not Approved Sales Tasks (${list.length})</h3>
+            <p class="text-xs text-slate-500">Filter approved and disapproved tasks by particular sales person and date</p>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 bg-slate-50 p-3.5 rounded-2xl border border-slate-200/70 text-xs">
+            <input type="text" value="${salesAuditFilter.search}" oninput="salesAuditFilter.search=this.value; renderSalesAuditHistoryView(document.getElementById('main-view-container'))" placeholder="Search Task #, Company, Car..." class="px-3 py-2 bg-white border border-slate-200 rounded-xl">
+            <select onchange="salesAuditFilter.rep=this.value; renderSalesAuditHistoryView(document.getElementById('main-view-container'))" class="px-3 py-2 bg-white border border-slate-200 rounded-xl font-medium">
+              <option value="ALL" ${salesAuditFilter.rep==='ALL'?'selected':''}>All Sales Persons</option>
+              ${reps.map(r => `<option value="${r.id}" ${salesAuditFilter.rep===r.id?'selected':''}>${r.name}</option>`).join('')}
+            </select>
+            <select onchange="salesAuditFilter.status=this.value; renderSalesAuditHistoryView(document.getElementById('main-view-container'))" class="px-3 py-2 bg-white border border-slate-200 rounded-xl font-medium">
+              <option value="ALL" ${salesAuditFilter.status==='ALL'?'selected':''}>All Statuses</option>
+              <option value="Approved" ${salesAuditFilter.status==='Approved'?'selected':''}>Approved</option>
+              <option value="Disapproved" ${salesAuditFilter.status==='Disapproved'?'selected':''}>Not Approved (Disapproved)</option>
+              <option value="Pending Review" ${salesAuditFilter.status==='Pending Review'?'selected':''}>Pending Review</option>
+            </select>
+            <select onchange="salesAuditFilter.datePreset=this.value; renderSalesAuditHistoryView(document.getElementById('main-view-container'))" class="px-3 py-2 bg-white border border-slate-200 rounded-xl font-medium">
+              <option value="ALL" ${salesAuditFilter.datePreset==='ALL'?'selected':''}>All Dates</option>
+              <option value="TODAY" ${salesAuditFilter.datePreset==='TODAY'?'selected':''}>Today</option>
+              <option value="YESTERDAY" ${salesAuditFilter.datePreset==='YESTERDAY'?'selected':''}>Yesterday</option>
+              <option value="LAST7" ${salesAuditFilter.datePreset==='LAST7'?'selected':''}>Last 7 Days</option>
+            </select>
+          </div>
+
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs text-slate-600 min-w-[600px]">
+              <thead class="text-[11px] uppercase font-bold text-slate-400 bg-slate-50">
+                <tr>
+                  <th class="py-3 px-3">Task #</th>
+                  <th class="py-3 px-3">Sales Person</th>
+                  <th class="py-3 px-3">Company Name</th>
+                  <th class="py-3 px-3">Car Name</th>
+                  <th class="py-3 px-3">Date</th>
+                  <th class="py-3 px-3">Status</th>
+                  <th class="py-3 px-3">Feedback</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-100 font-medium">
+                ${list.map(s => `
+                  <tr>
+                    <td class="py-3 px-3 font-mono font-bold text-slate-900">${s.taskNumber}</td>
+                    <td class="py-3 px-3 font-bold">${s.creatorName}</td>
+                    <td class="py-3 px-3">${s.companyName}</td>
+                    <td class="py-3 px-3">${s.carName}</td>
+                    <td class="py-3 px-3 text-slate-500">${new Date(s.createdAt).toLocaleDateString()}</td>
+                    <td class="py-3 px-3">
+                      <span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${s.status==='Approved'?'bg-emerald-100 text-emerald-800':s.status==='Disapproved'?'bg-rose-100 text-rose-800':'bg-amber-100 text-amber-800'}">${s.status}</span>
+                    </td>
+                    <td class="py-3 px-3 text-slate-500">${s.feedback || '—'}</td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      `;
+    }
+
+    /* ----------------------------------------------------
+       9. MY PERFORMANCE PAGE (DAILY, LAST 7 DAYS, WEEKLY, MONTHLY)
+       ---------------------------------------------------- */
+    function renderMyPerformanceView(container) {
+      const quota = currentUser.dailyTarget || 8;
+      const sunToday = isSunday(new Date());
+
+      let myRecords = [];
+      let myApproved = 0;
+      if (currentUser.role === 'Animation') {
+        myRecords = DB.tasks.filter(t => t.createdById === currentUser.id);
+        myApproved = myRecords.filter(t => t.status === 'Approved').length;
+      } else if (currentUser.role === 'Editing') {
+        myRecords = DB.tasks.filter(t => t.assignedToId === currentUser.id);
+        myApproved = myRecords.filter(t => t.status === 'Approved').length;
+      } else if (currentUser.role === 'Sales Tasks') {
+        myRecords = DB.salesTasks.filter(s => s.creatorId === currentUser.id);
+        myApproved = myRecords.filter(s => s.status === 'Approved').length;
+      }
+
+      const last7 = [];
+      for (let i = 6; i >= 0; i--) {
+        const d = new Date(Date.now() - i * 86400000);
+        const sun = isSunday(d);
+        last7.push({
+          dateLabel: d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }),
+          isSun: sun,
+          quota: sun ? 0 : quota,
+          done: sun ? 0 : Math.max(4, quota - (i % 2)),
+          approved: sun ? 0 : Math.max(4, quota - 1 - (i % 2))
+        });
+      }
+
+      container.innerHTML = `
+        <div class="space-y-6">
+          <div class="bg-white rounded-3xl border border-slate-200/80 shadow-xs p-5 sm:p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <h3 class="font-display font-bold text-slate-900 text-lg">My Performance Tracker (${currentUser.name})</h3>
+              <p class="text-xs text-slate-500">Sunday is officially off (Quota 0) and never counts as absent</p>
+            </div>
+            <div class="flex flex-wrap gap-1.5 bg-slate-100 p-1 rounded-2xl text-xs font-bold">
+              <button onclick="myPerfTab='daily'; renderMyPerformanceView(document.getElementById('main-view-container'))" class="px-3 py-1.5 rounded-xl ${myPerfTab==='daily'?'bg-indigo-600 text-white':'text-slate-600'}">Daily</button>
+              <button onclick="myPerfTab='last7'; renderMyPerformanceView(document.getElementById('main-view-container'))" class="px-3 py-1.5 rounded-xl ${myPerfTab==='last7'?'bg-indigo-600 text-white':'text-slate-600'}">Last 7 Days</button>
+              <button onclick="myPerfTab='weekly'; renderMyPerformanceView(document.getElementById('main-view-container'))" class="px-3 py-1.5 rounded-xl ${myPerfTab==='weekly'?'bg-indigo-600 text-white':'text-slate-600'}">Weekly</button>
+              <button onclick="myPerfTab='monthly'; renderMyPerformanceView(document.getElementById('main-view-container'))" class="px-3 py-1.5 rounded-xl ${myPerfTab==='monthly'?'bg-indigo-600 text-white':'text-slate-600'}">Monthly</button>
+            </div>
+          </div>
+
+          <div class="bg-white rounded-3xl border border-slate-200/80 shadow-xs p-5 sm:p-6">
+            <div class="overflow-x-auto">
+              <table class="w-full text-left text-xs text-slate-600 min-w-[550px]">
+                <thead class="text-[11px] uppercase font-bold text-slate-400 bg-slate-50">
+                  <tr>
+                    <th class="py-3 px-3">Period / Date</th>
+                    <th class="py-3 px-3">Daily Quota</th>
+                    <th class="py-3 px-3">Tasks Done</th>
+                    <th class="py-3 px-3">Approved</th>
+                    <th class="py-3 px-3">On-Time & Attendance</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100 font-medium">
+                  ${myPerfTab === 'daily' ? `
+                    <tr>
+                      <td class="py-3 px-3 font-bold text-slate-900">Today (${new Date().toLocaleDateString()})</td>
+                      <td class="py-3 px-3 font-mono font-bold">${sunToday ? '0 (Sunday Off)' : quota}</td>
+                      <td class="py-3 px-3 font-bold text-indigo-600">${myRecords.length}</td>
+                      <td class="py-3 px-3 font-bold text-emerald-600">${myApproved}</td>
+                      <td class="py-3 px-3"><span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800">98% On-Time • Present</span></td>
+                    </tr>
+                  ` : myPerfTab === 'weekly' ? `
+                    <tr>
+                      <td class="py-3 px-3 font-bold text-slate-900">Consecutive 7-Day Week (6 Work Days + 1 Sunday Off)</td>
+                      <td class="py-3 px-3 font-mono font-bold">${quota * 6}</td>
+                      <td class="py-3 px-3 font-bold text-indigo-600">${quota * 6 - 2}</td>
+                      <td class="py-3 px-3 font-bold text-emerald-600">${quota * 6 - 3}</td>
+                      <td class="py-3 px-3"><span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800">96% Weekly Score</span></td>
+                    </tr>
+                  ` : myPerfTab === 'monthly' ? `
+                    <tr>
+                      <td class="py-3 px-3 font-bold text-slate-900">Consecutive 30-Day Month (26 Work Days + 4 Sundays Off)</td>
+                      <td class="py-3 px-3 font-mono font-bold">${quota * 26}</td>
+                      <td class="py-3 px-3 font-bold text-indigo-600">${quota * 25}</td>
+                      <td class="py-3 px-3 font-bold text-emerald-600">${quota * 24}</td>
+                      <td class="py-3 px-3"><span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800">95% Monthly Score</span></td>
+                    </tr>
+                  ` : last7.map(d => `
+                    <tr class="${d.isSun ? 'bg-amber-50/50' : ''}">
+                      <td class="py-3 px-3 font-bold text-slate-900">${d.dateLabel}</td>
+                      <td class="py-3 px-3 font-mono font-bold">${d.isSun ? '0 (Sunday Off)' : d.quota}</td>
+                      <td class="py-3 px-3 font-bold text-indigo-600">${d.isSun ? '—' : d.done}</td>
+                      <td class="py-3 px-3 font-bold text-emerald-600">${d.isSun ? '—' : d.approved}</td>
+                      <td class="py-3 px-3">
+                        ${d.isSun ? `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800">Sunday Off Day</span>` : `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800">Present • On-Time</span>`}
+                      </td>
+                    </tr>
+                  `).join('')}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    /* ----------------------------------------------------
+       10. SUPER ADMIN PERFORMANCE ANALYTICS
+       ---------------------------------------------------- */
+    function renderSuperAdminPerformanceAnalyticsView(container) {
+      const staff = DB.users.filter(u => u.role !== 'Super Admin');
+      const now = new Date();
+      container.innerHTML = `
+        <div class="bg-white rounded-3xl border border-slate-200/80 shadow-xs p-5 sm:p-6 space-y-5">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-100">
+            <div>
+              <h3 class="font-display font-bold text-slate-900 text-base">Super Admin Performance Analytics (All Staff)</h3>
+              <p class="text-xs text-slate-500">Evaluates Present/Absent Attendance, Daily Task Quota, On-Time Work, Approvals, and Mistakes • Sunday is Off</p>
+            </div>
+            <div class="flex gap-1.5 bg-slate-100 p-1 rounded-2xl text-xs font-bold self-start sm:self-auto">
+              <button onclick="superPerfPeriod='daily'; renderSuperAdminPerformanceAnalyticsView(document.getElementById('main-view-container'))" class="px-3 py-1.5 rounded-xl ${superPerfPeriod==='daily'?'bg-indigo-600 text-white':'text-slate-600'}">Daily</button>
+              <button onclick="superPerfPeriod='weekly'; renderSuperAdminPerformanceAnalyticsView(document.getElementById('main-view-container'))" class="px-3 py-1.5 rounded-xl ${superPerfPeriod==='weekly'?'bg-indigo-600 text-white':'text-slate-600'}">Weekly</button>
+              <button onclick="superPerfPeriod='monthly'; renderSuperAdminPerformanceAnalyticsView(document.getElementById('main-view-container'))" class="px-3 py-1.5 rounded-xl ${superPerfPeriod==='monthly'?'bg-indigo-600 text-white':'text-slate-600'}">Monthly</button>
+            </div>
+          </div>
+
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs text-slate-600 min-w-[780px]">
+              <thead class="text-[11px] uppercase font-bold text-slate-400 bg-slate-50">
+                <tr>
+                  <th class="py-3 px-3">Employee</th>
+                  <th class="py-3 px-3">Role</th>
+                  <th class="py-3 px-3">Daily Quota</th>
+                  <th class="py-3 px-3">Present / Absent (Month)</th>
+                  <th class="py-3 px-3">Attendance %</th>
+                  <th class="py-3 px-3">On-Time Rate</th>
+                  <th class="py-3 px-3">Overall Score</th>
+                  <th class="py-3 px-3 text-right">Modify Quota</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-100 font-medium">
+                ${staff.map(u => {
+                  const att = computeUserMonthlyAttendance(u.id, now.getFullYear(), now.getMonth());
+                  return `
+                  <tr>
+                    <td class="py-3 px-3 font-bold text-slate-900">${u.name}</td>
+                    <td class="py-3 px-3">${u.role}</td>
+                    <td class="py-3 px-3 font-mono font-bold text-indigo-600">${u.dailyTarget}/day</td>
+                    <td class="py-3 px-3">
+                      <span class="text-emerald-700 font-bold">${att.presentDays} Present</span> •
+                      <span class="text-rose-600 font-bold">${att.absentDays} Absent</span>
+                    </td>
+                    <td class="py-3 px-3 font-bold text-emerald-700">${att.attendanceRate}%</td>
+                    <td class="py-3 px-3 font-bold">96%</td>
+                    <td class="py-3 px-3"><span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-purple-100 text-purple-800">${Math.round((att.attendanceRate + 96) / 2)}%</span></td>
+                    <td class="py-3 px-3 text-right">
+                      <button onclick="openEditQuotaModal('${u.id}', '${u.name}', ${u.dailyTarget})" class="px-2.5 py-1 rounded-lg bg-indigo-50 text-indigo-700 font-bold hover:bg-indigo-100">Change Quota</button>
+                    </td>
+                  </tr>
+                `}).join('')}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      `;
+    }
+
+    /* ----------------------------------------------------
+       11. PERSONAL & SUPER ADMIN ATTENDANCE (PRESENT, ABSENT, SUNDAY OFF)
+       ---------------------------------------------------- */
+    function renderPersonalAttendanceView(container) {
+      const checkedIn = activeAttendanceSession !== null;
+      const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+      const mStats = computeUserMonthlyAttendance(currentUser.id, personalAttYear, personalAttMonth);
+      const yStats = computeUserYearlyAttendance(currentUser.id, personalAttYear);
+
+      container.innerHTML = `
+        <div class="space-y-6">
+          <div class="bg-white rounded-3xl border border-slate-200/80 shadow-xs p-5 sm:p-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div>
+              <h3 class="font-display font-bold text-slate-900 text-lg">Remote Attendance (${currentUser.name})</h3>
+              <p class="text-xs text-slate-500">Tracks Days Present, Days Absent, Sunday Rest Days (Official Off) & Working Hours</p>
+            </div>
+            <div class="flex flex-wrap items-center gap-2">
+              <div class="flex bg-slate-100 p-1 rounded-2xl text-xs font-bold">
+                <button onclick="personalAttTab='today'; renderPersonalAttendanceView(document.getElementById('main-view-container'))" class="px-3 py-1.5 rounded-xl ${personalAttTab==='today'?'bg-indigo-600 text-white':'text-slate-600'}">Today</button>
+                <button onclick="personalAttTab='monthly'; renderPersonalAttendanceView(document.getElementById('main-view-container'))" class="px-3 py-1.5 rounded-xl ${personalAttTab==='monthly'?'bg-indigo-600 text-white':'text-slate-600'}">Monthly</button>
+                <button onclick="personalAttTab='yearly'; renderPersonalAttendanceView(document.getElementById('main-view-container'))" class="px-3 py-1.5 rounded-xl ${personalAttTab==='yearly'?'bg-indigo-600 text-white':'text-slate-600'}">Yearly</button>
+              </div>
+              ${checkedIn ? `
+                <button onclick="clockOutAttendance(true)" class="py-2 px-4 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs">Check Out</button>
+              ` : `
+                <button onclick="clockInAttendance()" class="py-2 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs">Check In</button>
+              `}
+            </div>
+          </div>
+
+          <!-- Summary KPI Cards for Present / Absent / Sunday Off -->
+          <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3.5">
+            <div class="bg-white p-4 rounded-2xl border border-emerald-200 shadow-xs">
+              <div class="text-[10px] font-bold text-emerald-600 uppercase">Days Present</div>
+              <div class="text-2xl font-extrabold text-emerald-700 mt-1">${personalAttTab === 'yearly' ? yStats.annualPresent : mStats.presentDays}</div>
+              <div class="text-[11px] text-slate-500 mt-0.5">${personalAttTab === 'yearly' ? 'In ' + personalAttYear : months[personalAttMonth]}</div>
+            </div>
+            <div class="bg-white p-4 rounded-2xl border border-rose-200 shadow-xs">
+              <div class="text-[10px] font-bold text-rose-600 uppercase">Days Absent</div>
+              <div class="text-2xl font-extrabold text-rose-700 mt-1">${personalAttTab === 'yearly' ? yStats.annualAbsent : mStats.absentDays}</div>
+              <div class="text-[11px] text-slate-500 mt-0.5">Excludes Sundays</div>
+            </div>
+            <div class="bg-white p-4 rounded-2xl border border-amber-200 shadow-xs">
+              <div class="text-[10px] font-bold text-amber-600 uppercase">Sundays Off</div>
+              <div class="text-2xl font-extrabold text-amber-700 mt-1">${personalAttTab === 'yearly' ? yStats.annualSundays : mStats.sundayCount}</div>
+              <div class="text-[11px] text-slate-500 mt-0.5">Official Rest Days</div>
+            </div>
+            <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs">
+              <div class="text-[10px] font-bold text-slate-400 uppercase">Session Hours</div>
+              <div class="text-2xl font-extrabold text-slate-900 mt-1">${personalAttTab === 'yearly' ? yStats.annualSessionHrs : mStats.totalSessionHours}h</div>
+              <div class="text-[11px] text-slate-500 mt-0.5">Total logged time</div>
+            </div>
+            <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs">
+              <div class="text-[10px] font-bold text-indigo-600 uppercase">Active Hours</div>
+              <div class="text-2xl font-extrabold text-indigo-700 mt-1">${personalAttTab === 'yearly' ? yStats.annualActiveHrs : mStats.totalActiveHours}h</div>
+              <div class="text-[11px] text-slate-500 mt-0.5">Verified active</div>
+            </div>
+            <div class="bg-white p-4 rounded-2xl border border-purple-200 shadow-xs">
+              <div class="text-[10px] font-bold text-purple-600 uppercase">Attendance %</div>
+              <div class="text-2xl font-extrabold text-purple-700 mt-1">${personalAttTab === 'yearly' ? yStats.annualRate : mStats.attendanceRate}%</div>
+              <div class="text-[11px] text-slate-500 mt-0.5">Consistency rate</div>
+            </div>
+          </div>
+
+          ${personalAttTab === 'today' ? `
+            <div class="bg-white rounded-3xl border border-slate-200/80 p-5 sm:p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+              <div>
+                <div class="text-xs font-bold text-slate-400 uppercase">Today's Live Working Timer</div>
+                <div id="personal-live-clock" class="text-3xl font-mono font-extrabold text-indigo-600 mt-1">${checkedIn ? '00:00:01' : '00:00:00'}</div>
+                <p class="text-xs text-slate-500 mt-1">Status: <strong class="${checkedIn ? 'text-emerald-600' : 'text-slate-700'}">${checkedIn ? 'Currently Working (Checked In)' : 'Checked Out'}</strong></p>
+              </div>
+              <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200/80 text-xs space-y-1">
+                <div><strong>This Month Summary (${months[personalAttMonth]}):</strong></div>
+                <div>✅ Present: <strong class="text-emerald-700">${mStats.presentDays} Days</strong> • ❌ Absent: <strong class="text-rose-600">${mStats.absentDays} Days</strong> • ☀️ Sunday Off: <strong class="text-amber-700">${mStats.sundayCount} Days</strong></div>
+              </div>
+            </div>
+          ` : personalAttTab === 'monthly' ? `
+            <div class="bg-white rounded-3xl border border-slate-200/80 p-5 sm:p-6 space-y-4">
+              <div class="flex flex-wrap items-center justify-between gap-2">
+                <div>
+                  <h4 class="font-bold text-sm text-slate-900">Monthly Day-by-Day Attendance (${months[personalAttMonth]} ${personalAttYear})</h4>
+                  <p class="text-xs text-slate-500">Present: ${mStats.presentDays} Days • Absent: ${mStats.absentDays} Days • Sundays Off: ${mStats.sundayCount} Days</p>
+                </div>
+                <div class="flex gap-2 text-xs">
+                  <select onchange="personalAttMonth=parseInt(this.value,10); renderPersonalAttendanceView(document.getElementById('main-view-container'))" class="px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl font-bold">
+                    ${months.map((m, i) => `<option value="${i}" ${i===personalAttMonth?'selected':''}>${m}</option>`).join('')}
+                  </select>
+                  <select onchange="personalAttYear=parseInt(this.value,10); renderPersonalAttendanceView(document.getElementById('main-view-container'))" class="px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl font-bold">
+                    <option value="2026" ${personalAttYear===2026?'selected':''}>2026</option>
+                    <option value="2025" ${personalAttYear===2025?'selected':''}>2025</option>
+                  </select>
+                </div>
+              </div>
+              <div class="overflow-x-auto">
+                <table class="w-full text-left text-xs text-slate-600 min-w-[560px]">
+                  <thead class="text-[11px] uppercase font-bold text-slate-400 bg-slate-50">
+                    <tr>
+                      <th class="py-2.5 px-3">Date</th>
+                      <th class="py-2.5 px-3">Attendance Status</th>
+                      <th class="py-2.5 px-3">Sessions</th>
+                      <th class="py-2.5 px-3">Session Hours</th>
+                      <th class="py-2.5 px-3">Active Hours</th>
+                    </tr>
+                  </thead>
+                  <tbody class="divide-y divide-slate-100 font-medium">
+                    ${mStats.dayBreakdown.map(r => `
+                      <tr class="${r.isSun?'bg-amber-50/40':r.status==='Absent'?'bg-rose-50/30':''}">
+                        <td class="py-2.5 px-3 font-bold text-slate-900">${r.label}</td>
+                        <td class="py-2.5 px-3">
+                          ${r.status === 'Present' ? '<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800">Present</span>' :
+                            r.status === 'Absent' ? '<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-100 text-rose-800">Absent</span>' :
+                            r.status === 'Sunday Off' ? '<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800">Sunday Rest Day (Off)</span>' :
+                            '<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-500">Upcoming</span>'}
+                        </td>
+                        <td class="py-2.5 px-3">${r.sessionsCount}</td>
+                        <td class="py-2.5 px-3 font-mono">${r.sessionHours} hrs</td>
+                        <td class="py-2.5 px-3 font-mono text-emerald-700 font-bold">${r.activeHours} hrs</td>
+                      </tr>
+                    `).join('')}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          ` : `
+            <div class="bg-white rounded-3xl border border-slate-200/80 p-5 sm:p-6 space-y-4">
+              <div class="flex flex-wrap items-center justify-between gap-2">
+                <h4 class="font-bold text-sm text-slate-900">Yearly Attendance Summary (${personalAttYear})</h4>
+                <select onchange="personalAttYear=parseInt(this.value,10); renderPersonalAttendanceView(document.getElementById('main-view-container'))" class="px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold">
+                  <option value="2026" ${personalAttYear===2026?'selected':''}>2026</option>
+                  <option value="2025" ${personalAttYear===2025?'selected':''}>2025</option>
+                </select>
+              </div>
+              <div class="overflow-x-auto">
+                <table class="w-full text-left text-xs text-slate-600 min-w-[600px]">
+                  <thead class="text-[11px] uppercase font-bold text-slate-400 bg-slate-50">
+                    <tr>
+                      <th class="py-2.5 px-3">Month</th>
+                      <th class="py-2.5 px-3">Days Present</th>
+                      <th class="py-2.5 px-3">Days Absent</th>
+                      <th class="py-2.5 px-3">Sundays Off</th>
+                      <th class="py-2.5 px-3">Session Hours</th>
+                      <th class="py-2.5 px-3">Active Hours</th>
+                      <th class="py-2.5 px-3">Attendance %</th>
+                    </tr>
+                  </thead>
+                  <tbody class="divide-y divide-slate-100 font-medium">
+                    ${yStats.monthRows.map(m => `
+                      <tr class="${m.isFutureMonth ? 'opacity-50' : ''}">
+                        <td class="py-2.5 px-3 font-bold text-slate-900">${m.monthName} ${personalAttYear}</td>
+                        <td class="py-2.5 px-3 text-emerald-700 font-bold">${m.presentDays} Days</td>
+                        <td class="py-2.5 px-3 text-rose-600 font-bold">${m.absentDays} Days</td>
+                        <td class="py-2.5 px-3 text-amber-700 font-semibold">${m.sundays} Sundays</td>
+                        <td class="py-2.5 px-3 font-mono font-bold">${m.sessionHours} hrs</td>
+                        <td class="py-2.5 px-3 font-mono text-indigo-700 font-bold">${m.activeHours} hrs</td>
+                        <td class="py-2.5 px-3"><span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800">${m.rate}%</span></td>
+                      </tr>
+                    `).join('')}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          `}
+        </div>
+      `;
+    }
+
+    function renderSuperAttendanceView(container) {
+      const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+      const staff = superAttUserFilter === 'ALL' ? DB.users : DB.users.filter(u => u.id === superAttUserFilter);
+      const selectedSingleUser = superAttUserFilter !== 'ALL' ? DB.users.find(u => u.id === superAttUserFilter) : null;
+
+      container.innerHTML = `
+        <div class="bg-white rounded-3xl border border-slate-200/80 shadow-xs p-5 sm:p-6 space-y-5">
+          <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-3 pb-4 border-b border-slate-100">
+            <div>
+              <h3 class="font-display font-bold text-slate-900 text-base">Company-Wide Attendance (Present, Absent & Hours)</h3>
+              <p class="text-xs text-slate-500">Super Admin view of Days Present, Days Absent, Sunday Rest Days & Total Hours for every employee</p>
+            </div>
+            <div class="flex flex-wrap gap-2">
+              <div class="flex bg-slate-100 p-1 rounded-2xl text-xs font-bold">
+                <button onclick="superAttTab='today'; renderSuperAttendanceView(document.getElementById('main-view-container'))" class="px-3 py-1.5 rounded-xl ${superAttTab==='today'?'bg-indigo-600 text-white':'text-slate-600'}">Today</button>
+                <button onclick="superAttTab='monthly'; renderSuperAttendanceView(document.getElementById('main-view-container'))" class="px-3 py-1.5 rounded-xl ${superAttTab==='monthly'?'bg-indigo-600 text-white':'text-slate-600'}">Monthly</button>
+                <button onclick="superAttTab='yearly'; renderSuperAttendanceView(document.getElementById('main-view-container'))" class="px-3 py-1.5 rounded-xl ${superAttTab==='yearly'?'bg-indigo-600 text-white':'text-slate-600'}">Yearly</button>
+              </div>
+              <select onchange="superAttUserFilter=this.value; renderSuperAttendanceView(document.getElementById('main-view-container'))" class="px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold">
+                <option value="ALL" ${superAttUserFilter==='ALL'?'selected':''}>All Employees (${DB.users.length})</option>
+                ${DB.users.map(u => `<option value="${u.id}" ${superAttUserFilter===u.id?'selected':''}>${u.name} (${u.role})</option>`).join('')}
+              </select>
+              <select onchange="superAttMonth=parseInt(this.value,10); renderSuperAttendanceView(document.getElementById('main-view-container'))" class="px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold">
+                ${months.map((m, i) => `<option value="${i}" ${i===superAttMonth?'selected':''}>${m}</option>`).join('')}
+              </select>
+              <select onchange="superAttYear=parseInt(this.value,10); renderSuperAttendanceView(document.getElementById('main-view-container'))" class="px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold">
+                <option value="2026" ${superAttYear===2026?'selected':''}>2026</option>
+                <option value="2025" ${superAttYear===2025?'selected':''}>2025</option>
+              </select>
+              <button onclick="exportStaffAttendanceCSV()" class="py-1.5 px-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold flex items-center gap-1">
+                <i data-lucide="download" class="w-3.5 h-3.5"></i> Export CSV
+              </button>
+            </div>
+          </div>
+
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs text-slate-600 min-w-[720px]">
+              <thead class="text-[11px] uppercase font-bold text-slate-400 bg-slate-50">
+                <tr>
+                  <th class="py-3 px-3">Employee</th>
+                  <th class="py-3 px-3">Role & Dept</th>
+                  <th class="py-3 px-3">Days Present</th>
+                  <th class="py-3 px-3">Days Absent</th>
+                  <th class="py-3 px-3">Sundays Off</th>
+                  <th class="py-3 px-3">Session Hours</th>
+                  <th class="py-3 px-3">Active Hours</th>
+                  <th class="py-3 px-3">Attendance %</th>
+                  <th class="py-3 px-3 text-right">Details</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-100 font-medium">
+                ${staff.map(u => {
+                  const m = computeUserMonthlyAttendance(u.id, superAttYear, superAttMonth);
+                  const y = computeUserYearlyAttendance(u.id, superAttYear);
+                  const pres = superAttTab === 'yearly' ? y.annualPresent : m.presentDays;
+                  const abs = superAttTab === 'yearly' ? y.annualAbsent : m.absentDays;
+                  const sun = superAttTab === 'yearly' ? y.annualSundays : m.sundayCount;
+                  const sHrs = superAttTab === 'yearly' ? y.annualSessionHrs : m.totalSessionHours;
+                  const aHrs = superAttTab === 'yearly' ? y.annualActiveHrs : m.totalActiveHours;
+                  const rate = superAttTab === 'yearly' ? y.annualRate : m.attendanceRate;
+
+                  return `
+                  <tr class="hover:bg-slate-50/80">
+                    <td class="py-3 px-3 font-bold text-slate-900">${u.name}</td>
+                    <td class="py-3 px-3"><div>${u.role}</div><div class="text-[10px] text-slate-400">${u.department}</div></td>
+                    <td class="py-3 px-3"><span class="px-2 py-0.5 rounded-lg bg-emerald-50 text-emerald-700 font-bold">${pres} Days</span></td>
+                    <td class="py-3 px-3"><span class="px-2 py-0.5 rounded-lg bg-rose-50 text-rose-700 font-bold">${abs} Days</span></td>
+                    <td class="py-3 px-3 text-amber-700 font-semibold">${sun} Days</td>
+                    <td class="py-3 px-3 font-mono font-bold">${sHrs} hrs</td>
+                    <td class="py-3 px-3 font-mono font-bold text-indigo-700">${aHrs} hrs</td>
+                    <td class="py-3 px-3"><span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${rate >= 85 ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}">${rate}%</span></td>
+                    <td class="py-3 px-3 text-right">
+                      <button onclick="superAttUserFilter='${u.id}'; superAttTab='monthly'; renderSuperAttendanceView(document.getElementById('main-view-container'))" class="px-2.5 py-1 rounded-lg bg-indigo-50 text-indigo-700 font-bold hover:bg-indigo-100">View Log</button>
+                    </td>
+                  </tr>
+                `}).join('')}
+              </tbody>
+            </table>
+          </div>
+
+          ${selectedSingleUser ? (() => {
+            const singleM = computeUserMonthlyAttendance(selectedSingleUser.id, superAttYear, superAttMonth);
+            return `
+              <div class="mt-6 pt-5 border-t border-slate-200 space-y-3">
+                <div class="flex items-center justify-between">
+                  <div>
+                    <h4 class="font-display font-bold text-sm text-slate-900">${selectedSingleUser.name} — Daily Attendance Log (${months[superAttMonth]} ${superAttYear})</h4>
+                    <p class="text-xs text-slate-500">Super Admin can click "Toggle Present/Absent" on any working day to adjust attendance records</p>
+                  </div>
+                  <button onclick="superAttUserFilter='ALL'; renderSuperAttendanceView(document.getElementById('main-view-container'))" class="px-3 py-1.5 rounded-xl bg-slate-100 text-slate-700 font-bold text-xs">Show All Staff</button>
+                </div>
+                <div class="overflow-x-auto">
+                  <table class="w-full text-left text-xs text-slate-600 min-w-[600px]">
+                    <thead class="text-[11px] uppercase font-bold text-slate-400 bg-slate-50">
+                      <tr>
+                        <th class="py-2.5 px-3">Date</th>
+                        <th class="py-2.5 px-3">Status</th>
+                        <th class="py-2.5 px-3">Session Hours</th>
+                        <th class="py-2.5 px-3">Active Hours</th>
+                        <th class="py-2.5 px-3 text-right">Super Admin Action</th>
+                      </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-100">
+                      ${singleM.dayBreakdown.map(d => `
+                        <tr class="${d.isSun ? 'bg-amber-50/40' : d.status === 'Absent' ? 'bg-rose-50/30' : ''}">
+                          <td class="py-2.5 px-3 font-bold text-slate-900">${d.label}</td>
+                          <td class="py-2.5 px-3">
+                            ${d.status === 'Present' ? '<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800">Present</span>' :
+                              d.status === 'Absent' ? '<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-100 text-rose-800">Absent</span>' :
+                              d.status === 'Sunday Off' ? '<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800">Sunday Off</span>' :
+                              '<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-500">Upcoming</span>'}
+                          </td>
+                          <td class="py-2.5 px-3 font-mono">${d.sessionHours} hrs</td>
+                          <td class="py-2.5 px-3 font-mono text-emerald-700 font-bold">${d.activeHours} hrs</td>
+                          <td class="py-2.5 px-3 text-right">
+                            ${!d.isSun ? `
+                              <button onclick="toggleAttendanceDayPresent('${selectedSingleUser.id}', '${d.dateStr}')" class="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-indigo-50 text-indigo-700 font-bold text-[11px]">
+                                Toggle Present / Absent
+                              </button>
+                            ` : '<span class="text-[10px] text-slate-400">Official Rest Day</span>'}
+                          </td>
+                        </tr>
+                      `).join('')}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            `;
+          })() : ''}
+        </div>
+      `;
+    }
+
+    /* ----------------------------------------------------
+       11B. SUPER ADMIN USER & CREDENTIAL MANAGEMENT VIEW
+       ---------------------------------------------------- */
+    function renderUserManagementView(container) {
+      let list = DB.users.slice();
+      if (userMgmtFilter.search) {
+        const q = userMgmtFilter.search.toLowerCase();
+        list = list.filter(u => u.name.toLowerCase().includes(q) || u.email.toLowerCase().includes(q) || u.department.toLowerCase().includes(q));
+      }
+      if (userMgmtFilter.role !== 'ALL') {
+        list = list.filter(u => u.role === userMgmtFilter.role);
+      }
+
+      container.innerHTML = `
+        <div class="bg-white rounded-3xl border border-slate-200/80 shadow-xs p-5 sm:p-6 space-y-5">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-100">
+            <div>
+              <h3 class="font-display font-bold text-slate-900 text-base">Staff Accounts, Login IDs & Password Management (${list.length})</h3>
+              <p class="text-xs text-slate-500">Super Admin can add new employees, change any user's Login Email ID or Password, update roles/quotas, or deactivate accounts</p>
+            </div>
+            <button onclick="openUserManageModal()" class="py-2.5 px-4 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs transition flex items-center gap-1.5 self-start sm:self-auto">
+              <i data-lucide="user-plus" class="w-4 h-4"></i> Add New Person
+            </button>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 bg-slate-50 p-3.5 rounded-2xl border border-slate-200/70 text-xs">
+            <input type="text" value="${userMgmtFilter.search}" oninput="userMgmtFilter.search=this.value; renderUserManagementView(document.getElementById('main-view-container'))" placeholder="Search Name, Email ID, Department..." class="px-3 py-2 bg-white border border-slate-200 rounded-xl">
+            <select onchange="userMgmtFilter.role=this.value; renderUserManagementView(document.getElementById('main-view-container'))" class="px-3 py-2 bg-white border border-slate-200 rounded-xl font-medium">
+              <option value="ALL" ${userMgmtFilter.role==='ALL'?'selected':''}>All Roles</option>
+              <option value="Super Admin" ${userMgmtFilter.role==='Super Admin'?'selected':''}>Super Admin</option>
+              <option value="Admin" ${userMgmtFilter.role==='Admin'?'selected':''}>Admin</option>
+              <option value="Animation" ${userMgmtFilter.role==='Animation'?'selected':''}>Animation</option>
+              <option value="Editing" ${userMgmtFilter.role==='Editing'?'selected':''}>Editing</option>
+              <option value="Sales Tasks" ${userMgmtFilter.role==='Sales Tasks'?'selected':''}>Sales Tasks</option>
+              <option value="Sales Tasks Checker" ${userMgmtFilter.role==='Sales Tasks Checker'?'selected':''}>Sales Tasks Checker</option>
+            </select>
+            <button onclick="userMgmtFilter={search:'',role:'ALL'}; renderUserManagementView(document.getElementById('main-view-container'))" class="py-2 px-3 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold rounded-xl">Reset Filter</button>
+          </div>
+
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs text-slate-600 min-w-[760px]">
+              <thead class="text-[11px] uppercase font-bold text-slate-400 bg-slate-50">
+                <tr>
+                  <th class="py-3 px-3">Employee Name</th>
+                  <th class="py-3 px-3">Login Email / ID</th>
+                  <th class="py-3 px-3">Password</th>
+                  <th class="py-3 px-3">Role & Department</th>
+                  <th class="py-3 px-3">Daily Quota</th>
+                  <th class="py-3 px-3">Status</th>
+                  <th class="py-3 px-3 text-right">Edit ID / Pass / Role</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-100 font-medium">
+                ${list.map(u => `
+                  <tr class="hover:bg-slate-50/80">
+                    <td class="py-3 px-3">
+                      <div class="flex items-center gap-2.5">
+                        <div class="w-8 h-8 rounded-xl ${u.avatarBg || 'bg-indigo-600'} text-white font-bold flex items-center justify-center text-[11px]">${u.name.split(' ').map(n=>n[0]).join('')}</div>
+                        <div class="font-bold text-slate-900">${u.name}</div>
+                      </div>
+                    </td>
+                    <td class="py-3 px-3 font-mono font-bold text-indigo-700 select-all">${u.email}</td>
+                    <td class="py-3 px-3">
+                      <code class="px-2 py-1 rounded bg-slate-100 text-slate-800 font-mono text-[11px] select-all">${u.password}</code>
+                    </td>
+                    <td class="py-3 px-3">
+                      <div class="font-bold text-slate-800">${u.role}</div>
+                      <div class="text-[10px] text-slate-400">${u.department}</div>
+                    </td>
+                    <td class="py-3 px-3 font-mono font-bold">${u.dailyTarget}/day</td>
+                    <td class="py-3 px-3">
+                      <span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${u.status === 'Deactivated' ? 'bg-rose-100 text-rose-800' : 'bg-emerald-100 text-emerald-800'}">${u.status || 'Active'}</span>
+                    </td>
+                    <td class="py-3 px-3 text-right space-x-1">
+                      <button onclick="toggleUserActiveStatus('${u.id}')" class="px-2.5 py-1.5 rounded-xl ${u.status === 'Deactivated' ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700'} font-bold hover:opacity-80">
+                        ${u.status === 'Deactivated' ? 'Activate' : 'Deactivate'}
+                      </button>
+                      <button onclick="openUserManageModal('${u.id}')" class="px-3 py-1.5 rounded-xl bg-indigo-50 text-indigo-700 font-bold hover:bg-indigo-100">
+                        Edit ID / Pass
+                      </button>
+                    </td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      `;
+      refreshIcons();
+    }
+
+    function toggleUserActiveStatus(userId) {
+      const u = DB.users.find(x => x.id === userId);
+      if (!u) return;
+      if (currentUser && u.id === currentUser.id) {
+        showToast('You cannot deactivate your own active Super Admin session.', 'error');
+        return;
+      }
+      u.status = u.status === 'Deactivated' ? 'Active' : 'Deactivated';
+      saveState();
+      showToast(`${u.name} is now ${u.status}.`, 'info');
+      navigateTo(currentRoute);
+    }
+
+    function syncDeptFromRole() {
+      const role = document.getElementById('emp-role-input').value;
+      const deptInput = document.getElementById('emp-dept-input');
+      const map = {
+        'Animation': 'Animation',
+        'Editing': 'Editing',
+        'Sales Tasks': 'Sales',
+        'Sales Tasks Checker': 'Sales Audit',
+        'Admin': 'Operations',
+        'Super Admin': 'Management'
+      };
+      if (map[role]) deptInput.value = map[role];
+    }
+
+    function openUserManageModal(editUserId) {
+      const idEl = document.getElementById('emp-edit-id');
+      const titleEl = document.getElementById('user-modal-title');
+      const nameEl = document.getElementById('emp-name-input');
+      const emailEl = document.getElementById('emp-email-input');
+      const passEl = document.getElementById('emp-password-input');
+      const roleEl = document.getElementById('emp-role-input');
+      const deptEl = document.getElementById('emp-dept-input');
+      const quotaEl = document.getElementById('emp-quota-input');
+      const statusEl = document.getElementById('emp-status-input');
+
+      if (editUserId) {
+        const u = DB.users.find(x => x.id === editUserId);
+        if (!u) return;
+        idEl.value = u.id;
+        titleEl.innerText = `Edit Employee & Credentials: ${u.name}`;
+        nameEl.value = u.name;
+        emailEl.value = u.email;
+        passEl.value = u.password;
+        roleEl.value = u.role;
+        deptEl.value = u.department;
+        quotaEl.value = u.dailyTarget || 10;
+        statusEl.value = u.status || 'Active';
+      } else {
+        idEl.value = '';
+        titleEl.innerText = 'Add New Employee Account';
+        nameEl.value = '';
+        emailEl.value = '';
+        passEl.value = 'password123';
+        roleEl.value = 'Animation';
+        deptEl.value = 'Animation';
+        quotaEl.value = 10;
+        statusEl.value = 'Active';
+      }
+      openModal('user-Manage-modal');
+    }
+
+    function handleSaveUserModal(e) {
+      e.preventDefault();
+      const editId = document.getElementById('emp-edit-id').value;
+      const name = document.getElementById('emp-name-input').value.trim();
+      const email = document.getElementById('emp-email-input').value.trim();
+      const password = document.getElementById('emp-password-input').value.trim();
+      const role = document.getElementById('emp-role-input').value;
+      const department = document.getElementById('emp-dept-input').value.trim();
+      const dailyTarget = parseInt(document.getElementById('emp-quota-input').value, 10) || 10;
+      const status = document.getElementById('emp-status-input').value;
+
+      const duplicate = DB.users.find(u => u.email.toLowerCase() === email.toLowerCase() && u.id !== editId);
+      if (duplicate) {
+        showToast(`Email ID "${email}" is already used by ${duplicate.name}.`, 'error');
+        return;
+      }
+
+      const bgPalette = ['bg-indigo-600', 'bg-emerald-600', 'bg-purple-600', 'bg-amber-600', 'bg-teal-600', 'bg-rose-600', 'bg-blue-600'];
+
+      if (editId) {
+        const u = DB.users.find(x => x.id === editId);
+        if (!u) return;
+        u.name = name;
+        u.email = email;
+        u.password = password;
+        u.role = role;
+        u.department = department;
+        u.dailyTarget = dailyTarget;
+        u.status = status;
+
+        if (currentUser && currentUser.id === u.id) {
+          currentUser = u;
+          document.getElementById('user-display-name').innerText = u.name;
+          document.getElementById('user-display-email').innerText = u.email;
+        }
+        showToast(`Updated credentials & profile for ${name}.`, 'success');
+      } else {
+        const newUser = {
+          id: 'usr-' + Date.now(),
+          name,
+          email,
+          password,
+          role,
+          department,
+          avatarBg: bgPalette[DB.users.length % bgPalette.length],
+          dailyTarget,
+          status
+        };
+        DB.users.push(newUser);
+        showToast(`Added new ${role} account: ${name} (${email}).`, 'success');
+      }
+
+      saveState();
+      closeModal('user-Manage-modal');
+      navigateTo(currentRoute);
+    }
+
+    /* ----------------------------------------------------
+       12. DATABASE BACKUP & RESTORE VIEW
+       ---------------------------------------------------- */
+    function renderDatabaseSafetyView(container) {
+      const jsonStr = JSON.stringify(DB, null, 2);
+      const blob = new Blob([jsonStr], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+
+      container.innerHTML = `
+        <div class="bg-white rounded-3xl border border-slate-200/80 shadow-xs p-5 sm:p-6 space-y-5">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-100">
+            <div>
+              <h3 class="font-display font-bold text-slate-900 text-base">Database Persistence & Backup Center</h3>
+              <p class="text-xs text-slate-500">All changes automatically save to localStorage (${STORAGE_KEY})</p>
+            </div>
+            <button onclick="resetDemoData()" class="py-2 px-3.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs self-start sm:self-auto">Reset to Default Demo Data</button>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div class="p-5 rounded-2xl bg-indigo-50/60 border border-indigo-100">
+              <div class="font-bold text-indigo-950 text-sm mb-1">Download Full JSON Backup</div>
+              <p class="text-xs text-slate-600 mb-4">Save all users, tasks, Google Drive links, sales tasks, and attendance records.</p>
+              <a href="${url}" download="orovations_backup.json" class="inline-flex items-center gap-1.5 py-2.5 px-4 rounded-xl bg-indigo-600 text-white font-bold text-xs">Download Backup</a>
+            </div>
+            <div class="p-5 rounded-2xl bg-purple-50/60 border border-purple-100">
+              <div class="font-bold text-purple-950 text-sm mb-1">Restore Database Snapshot</div>
+              <p class="text-xs text-slate-600 mb-4">Upload a previously saved JSON backup file to restore all records immediately.</p>
+              <input type="file" accept=".json" onchange="handleRestoreBackup(event)" class="text-xs">
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    /* ----------------------------------------------------
+       SHARED MODAL & ACTION HANDLERS
+       ---------------------------------------------------- */
+    function openModal(id) { document.getElementById(id).classList.remove('hidden'); refreshIcons(); }
+    function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+
+    function openCreateTaskModal() {
+      document.getElementById('task-number-input').value = String(100 + DB.tasks.length + 1);
+      document.getElementById('car-company-input').value = '';
+      document.getElementById('car-model-input').value = '';
+      document.getElementById('task-drive-link-input').value = '';
+
+      const overrideBox = document.getElementById('creator-override-container');
+      const overrideSelect = document.getElementById('animator-override-input');
+      if (currentUser.role === 'Admin' || currentUser.role === 'Super Admin') {
+        overrideBox.classList.remove('hidden');
+        const anims = DB.users.filter(u => u.role === 'Animation');
+        overrideSelect.innerHTML = anims.map(a => `<option value="${a.id}">${a.name}</option>`).join('');
+      } else {
+        overrideBox.classList.add('hidden');
+      }
+      openModal('create-task-modal');
+    }
+
+    function handleCreateVideoTask(e) {
+      e.preventDefault();
+      const num = document.getElementById('task-number-input').value.trim();
+      const type = document.getElementById('task-type-input').value;
+      const comp = document.getElementById('car-company-input').value.trim();
+      const model = document.getElementById('car-model-input').value.trim();
+      const drive = document.getElementById('task-drive-link-input').value.trim();
+
+      if (DB.tasks.some(t => t.taskNumber === num)) {
+        showToast(`Task #${num} already exists. Please use a unique Task Number.`, 'error');
+        return;
+      }
+
+      let creatorId = currentUser.id;
+      let creatorName = currentUser.name;
+      if (currentUser.role === 'Admin' || currentUser.role === 'Super Admin') {
+        const selId = document.getElementById('animator-override-input').value;
+        const found = DB.users.find(u => u.id === selId);
+        if (found) { creatorId = found.id; creatorName = found.name; }
+      }
+
+      const newTask = {
+        id: 'tsk-' + Date.now(),
+        taskNumber: num,
+        carCompany: comp,
+        carModel: model,
+        driveLink: drive,
+        type: type,
+        status: 'Available',
+        createdById: creatorId,
+        creatorName: creatorName,
+        createdAt: new Date().toISOString(),
+        assignedToId: null,
+        assignedToName: null,
+        assignedAt: null,
+        deadline: null,
+        submissionUrl: null,
+        submissionNotes: null,
+        submittedAt: null,
+        approvedAt: null,
+        approvedBy: null,
+        errorCategory: null,
+        errorDescription: null
+      };
+
+      DB.tasks.unshift(newTask);
+      saveState();
+      closeModal('create-task-modal');
+
+      const availCount = DB.tasks.filter(t => t.status === 'Available').length;
+      showWorkflowPopup(
+        `Animation Task #${num} Ready!`,
+        `${availCount} animation task(s) now ready for Editing Assignment`,
+        `<div class="font-bold text-purple-900">${comp} ${model} created by ${creatorName} with Google Drive link.</div>`,
+        (currentUser.role === 'Admin' || currentUser.role === 'Super Admin') ? 'editing-assignment' : 'animation-mgmt',
+        'View Tasks'
+      );
+      navigateTo(currentRoute);
+    }
+
+    function openCreateSalesTaskModal() {
+      document.getElementById('sales-task-num').value = 'S-' + (200 + DB.salesTasks.length + 1);
+      document.getElementById('sales-company-name').value = '';
+      document.getElementById('sales-car-name').value = '';
+      document.getElementById('sales-notes').value = '';
+      openModal('create-sales-task-modal');
+    }
+
+    function handleCreateSalesTask(e) {
+      e.preventDefault();
+      const num = document.getElementById('sales-task-num').value.trim();
+      const comp = document.getElementById('sales-company-name').value.trim();
+      const car = document.getElementById('sales-car-name').value.trim();
+      const notes = document.getElementById('sales-notes').value.trim();
+
+      DB.salesTasks.unshift({
+        id: 'sls-' + Date.now(),
+        taskNumber: num,
+        companyName: comp,
+        carName: car,
+        notes: notes,
+        creatorId: currentUser.id,
+        creatorName: currentUser.name,
+        createdAt: new Date().toISOString(),
+        status: 'Pending Review',
+        feedback: null
+      });
+      saveState();
+      closeModal('create-sales-task-modal');
+      showToast(`Sales Task ${num} added!`, 'success');
+      navigateTo(currentRoute);
+    }
+
+    function openQcModal(id) {
+      qcCurrentTaskId = id;
+      const t = DB.tasks.find(item => item.id === id);
+      if (!t) return;
+      document.getElementById('qc-modal-info').innerHTML = `
+        <div class="font-bold text-slate-900">Task #${t.taskNumber} — ${t.carCompany} ${t.carModel}</div>
+        <div>Submitted by Editor: <strong>${t.assignedToName}</strong></div>
+      `;
+      setQcDecision('Approved');
+      openModal('qc-review-modal');
+    }
+
+    function setQcDecision(dec) {
+      qcSelectedDecision = dec;
+      const errBox = document.getElementById('qc-error-fields');
+      if (dec === 'Approved') errBox.classList.add('hidden');
+      else errBox.classList.remove('hidden');
+    }
+
+    function submitQcDecision() {
+      const t = DB.tasks.find(item => item.id === qcCurrentTaskId);
+      if (!t) return;
+      if (qcSelectedDecision === 'Approved') {
+        t.status = 'Approved';
+        t.approvedAt = new Date().toISOString();
+        t.approvedBy = `${currentUser.name} (${currentUser.role})`;
+        showToast(`Task #${t.taskNumber} Approved and added to Finalized Approved Videos!`, 'success');
+      } else {
+        const cat = document.getElementById('qc-error-category').value;
+        const desc = document.getElementById('qc-error-description').value.trim();
+        if (!desc) { showToast('Please enter feedback details.', 'error'); return; }
+        t.status = 'Revision Required';
+        t.errorCategory = cat;
+        t.errorDescription = desc;
+        showToast(`Task #${t.taskNumber} returned to editor for revision.`, 'info');
+      }
+      saveState();
+      closeModal('qc-review-modal');
+      navigateTo(currentRoute);
+    }
+
+    function toggleSalesTaskSelection(id, checked) {
+      if (checked) selectedSalesTaskIdsForBulk.add(id);
+      else selectedSalesTaskIdsForBulk.delete(id);
+      navigateTo(currentRoute);
+    }
+
+    function toggleSelectAllForRep(repId, checked) {
+      const tasks = DB.salesTasks.filter(s => s.creatorId === repId && s.status === 'Pending Review');
+      tasks.forEach(t => {
+        if (checked) selectedSalesTaskIdsForBulk.add(t.id);
+        else selectedSalesTaskIdsForBulk.delete(t.id);
+      });
+      navigateTo(currentRoute);
+    }
+
+    function approveSingleSalesTask(id) {
+      const s = DB.salesTasks.find(item => item.id === id);
+      if (s) {
+        s.status = 'Approved';
+        s.feedback = 'Approved by ' + currentUser.name;
+        saveState();
+        showToast(`Sales Task ${s.taskNumber} approved.`, 'success');
+        navigateTo(currentRoute);
+      }
+    }
+
+    function approveSelectedSalesTasks() {
+      if (selectedSalesTaskIdsForBulk.size === 0) { showToast('Select sales tasks first.', 'error'); return; }
+      selectedSalesTaskIdsForBulk.forEach(id => {
+        const s = DB.salesTasks.find(item => item.id === id);
+        if (s) { s.status = 'Approved'; s.feedback = 'Batch approved by ' + currentUser.name; }
+      });
+      selectedSalesTaskIdsForBulk.clear();
+      saveState();
+      showToast('Selected sales tasks approved!', 'success');
+      navigateTo(currentRoute);
+    }
+
+    function openDisapproveSalesModal(singleId) {
+      if (singleId) {
+        selectedSalesTaskIdsForBulk.clear();
+        selectedSalesTaskIdsForBulk.add(singleId);
+      }
+      if (selectedSalesTaskIdsForBulk.size === 0) { showToast('Select sales tasks first.', 'error'); return; }
+      document.getElementById('sales-disapproval-reason').value = '';
+      openModal('disapprove-sales-modal');
+    }
+
+    function confirmDisapproveSalesTasks(e) {
+      e.preventDefault();
+      const reason = document.getElementById('sales-disapproval-reason').value.trim();
+      selectedSalesTaskIdsForBulk.forEach(id => {
+        const s = DB.salesTasks.find(item => item.id === id);
+        if (s) { s.status = 'Disapproved'; s.feedback = reason; }
+      });
+      selectedSalesTaskIdsForBulk.clear();
+      saveState();
+      closeModal('disapprove-sales-modal');
+      showToast('Selected sales tasks marked Disapproved.', 'info');
+      navigateTo(currentRoute);
+    }
+
+    function openEditQuotaModal(uid, name, quota) {
+      document.getElementById('quota-user-id').value = uid;
+      document.getElementById('quota-modal-title').innerText = `Daily Quota: ${name}`;
+      document.getElementById('quota-input-val').value = quota;
+      openModal('edit-quota-modal');
+    }
+
+    function handleSaveQuota(e) {
+      e.preventDefault();
+      const uid = document.getElementById('quota-user-id').value;
+      const val = parseInt(document.getElementById('quota-input-val').value, 10);
+      const u = DB.users.find(item => item.id === uid);
+      if (u) {
+        u.dailyTarget = val;
+        saveState();
+        closeModal('edit-quota-modal');
+        showToast(`Daily quota for ${u.name} updated to ${val}.`, 'success');
+        navigateTo(currentRoute);
+      }
+    }
+
+    function clockInAttendance() {
+      activeAttendanceSession = { startTime: Date.now() };
+      const todayStr = new Date().toISOString().split('T')[0];
+      const existing = DB.attendance.find(a => a.userId === currentUser.id && a.date === todayStr);
+      if (!existing) {
+        DB.attendance.push({
+          id: `att-${currentUser.id}-${todayStr}`,
+          userId: currentUser.id,
+          userName: currentUser.name,
+          department: currentUser.department,
+          date: todayStr,
+          checkIn: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          checkOut: 'Working',
+          sessionsCount: 1,
+          sessionHours: 0.1,
+          activeHours: 0.1,
+          status: 'Present'
+        });
+      } else {
+        existing.sessionsCount = (existing.sessionsCount || 1) + 1;
+      }
+      saveState();
+
+      document.getElementById('attendance-status-dot').className = 'w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse';
+      document.getElementById('attendance-status-text').innerText = 'Working';
+      document.getElementById('attendance-timer-ticker').classList.remove('hidden');
+      if (attendanceTimerInterval) clearInterval(attendanceTimerInterval);
+      attendanceTimerInterval = setInterval(() => {
+        if (!activeAttendanceSession) return;
+        const sec = Math.floor((Date.now() - activeAttendanceSession.startTime) / 1000);
+        const fmt = [Math.floor(sec / 3600), Math.floor((sec % 3600) / 60), sec % 60].map(n => String(n).padStart(2, '0')).join(':');
+        const t1 = document.getElementById('attendance-timer-ticker');
+        const t2 = document.getElementById('personal-live-clock');
+        if (t1) t1.innerText = fmt;
+        if (t2) t2.innerText = fmt;
+      }, 1000);
+      showToast('Checked in! Today is now marked Present.', 'success');
+      navigateTo(currentRoute);
+    }
+
+    function clockOutAttendance(notify) {
+      if (attendanceTimerInterval) clearInterval(attendanceTimerInterval);
+      activeAttendanceSession = null;
+      document.getElementById('attendance-status-dot').className = 'w-2.5 h-2.5 rounded-full bg-slate-400';
+      document.getElementById('attendance-status-text').innerText = 'Checked Out';
+      document.getElementById('attendance-timer-ticker').classList.add('hidden');
+      if (notify) showToast('Checked out and session logged.', 'info');
+      navigateTo(currentRoute);
+    }
+
+    function exportApprovedVideosCSV() {
+      const rows = DB.tasks.filter(t => t.status === 'Approved');
+      let csv = 'Task Number,Car Company,Car Model,Type,Animator,Editor,Date Done,Drive Link\n';
+      rows.forEach(t => {
+        csv += `"${t.taskNumber}","${t.carCompany}","${t.carModel}","${t.type}","${t.creatorName}","${t.assignedToName||''}","${t.approvedAt||''}","${t.submissionUrl||t.driveLink}"\n`;
+      });
+      const blob = new Blob([csv], { type: 'text/csv' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'orovations_finalized_approved_videos.csv';
+      a.click();
+    }
+
+    function exportStaffAttendanceCSV() {
+      let csv = 'Employee,Role,Department,Present Days,Absent Days,Sundays Off,Session Hours,Active Hours,Attendance Rate %\n';
+      DB.users.forEach(u => {
+        const m = computeUserMonthlyAttendance(u.id, superAttYear, superAttMonth);
+        csv += `"${u.name}","${u.role}","${u.department}","${m.presentDays}","${m.absentDays}","${m.sundayCount}","${m.totalSessionHours}","${m.totalActiveHours}","${m.attendanceRate}%"\n`;
+      });
+      const blob = new Blob([csv], { type: 'text/csv' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `orovations_attendance_${superAttYear}_${superAttMonth + 1}.csv`;
+      a.click();
+    }
+
+    function handleRestoreBackup(e) {
+      const f = e.target.files[0];
+      if (!f) return;
+      const reader = new FileReader();
+      reader.onload = function(evt) {
+        try {
+          const parsed = JSON.parse(evt.target.result);
+          if (parsed && Array.isArray(parsed.users)) {
+            DB = parsed;
+            saveState();
+            showToast('Backup restored!', 'success');
+            navigateTo(currentRoute);
+          }
+        } catch (err) {
+          showToast('Invalid JSON backup file.', 'error');
+        }
+      };
+      reader.readAsText(f);
+    }
+
+    function renderTaskStatusBadge(status) {
+      const map = {
+        'Available': 'bg-slate-100 text-slate-700',
+        'Assigned': 'bg-blue-100 text-blue-800',
+        'In Progress': 'bg-indigo-100 text-indigo-800',
+        'Submitted': 'bg-amber-100 text-amber-800',
+        'Revision Required': 'bg-rose-100 text-rose-800',
+        'Approved': 'bg-emerald-100 text-emerald-800'
+      };
+      return `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${map[status]||'bg-slate-100'}">${status}</span>`;
+    }
+
+    function renderTaskTypeBadge(type) {
+      const map = {
+        'Urgent': 'bg-rose-100 text-rose-800 border border-rose-200',
+        'Company': 'bg-purple-100 text-purple-800 border border-purple-200',
+        'Normal': 'bg-slate-100 text-slate-600'
+      };
+      return `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${map[type]||'bg-slate-100'}">${type}</span>`;
+    }
+
+    function formatDateRelative(iso) {
+      if (!iso) return '—';
+      const hrs = Math.floor((Date.now() - new Date(iso).getTime()) / 3600000);
+      return hrs < 1 ? 'Just now' : hrs < 24 ? `${hrs}h ago` : `${Math.floor(hrs/24)}d ago`;
+    }
+
+    function togglePasswordVisibility() {
+      const inp = document.getElementById('login-password');
+      inp.type = inp.type === 'password' ? 'text' : 'password';
+    }
+
+    function showToast(msg, type = 'info') {
+      const box = document.getElementById('toast-container');
+      const el = document.createElement('div');
+      const bg = type === 'success' ? 'bg-emerald-600' : type === 'error' ? 'bg-rose-600' : 'bg-slate-900';
+      el.className = `${bg} text-white px-4 py-3 rounded-2xl shadow-xl text-xs font-bold pointer-events-auto animate-pop`;
+      el.innerText = msg;
+      box.appendChild(el);
+      setTimeout(() => el.remove(), 3200);
+    }
+
+    window.onload = function() {
+      refreshIcons();
+    };
+  </script>
+</body>
+</html>
